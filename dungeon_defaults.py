@@ -31,10 +31,10 @@ class RogueLikeDefaults():
 
         self.FPS = fps
 
-        self.tiles : List[List[Tile]]= [[Tiles.EMPTY_BLOCK] * width for _ in range(height)]
+        self.tiles : List[Tiles] = None
 
     def start(self) :
-        '''Starts the UI and draws the tiles'''
+        '''Starts the UI and draws tiles'''
         pygame.init()
         self.SCREEN = pygame.display.set_mode((self.window_width, self.window_height))
         self.CLOCK = pygame.time.Clock()
@@ -42,8 +42,15 @@ class RogueLikeDefaults():
 
         while True:
             self.CLOCK.tick(self.FPS)
+            
+            # Call drawing methods
             self.__drawGrid()
-            self.update()
+            self.__drawTiles()
+
+            # Call update function for extra functions..
+            self.update()  
+
+            # Exit code
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -55,25 +62,23 @@ class RogueLikeDefaults():
         '''Draws the tiles every frame. Don't change this'''
         for x in range(self.width):
             for y in range(self.height):
-                tile = self.tiles[x][y]
-                tile_size = (self.grid_size/100) * tile.size_ratio 
+                # Default empty tile
+                tile = Tiles.EMPTY_BLOCK
 
+                # Apply size reduction based on ratio
+                tile_size = (self.grid_size/100) * tile.size_ratio 
+                
+                # Adjust tile locations
                 tile_x = (x * self.grid_size) + (self.grid_size - tile_size) / 2
                 tile_y = (y * self.grid_size) + (self.grid_size - tile_size) / 2
                 
+                # Draw the rect
                 rect = pygame.Rect(tile_x, tile_y, tile_size, tile_size)
                 pygame.draw.rect(self.SCREEN, tile.color, rect, 1)
 
-
-
-    def createRoom(self, x, y, height, width, color):
-        '''Creates a room from the given @height, @width, @color.
-        Pivot point is top left corner.
-        '''
-
-
-
-
+    def __drawTiles(self):
+        '''Draws the tiles every frame. Don't change this'''
+        pass
     
     def update(self):
         '''Will be called every frame. If you want to do 
