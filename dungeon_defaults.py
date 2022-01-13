@@ -10,8 +10,17 @@ from color_constants import Color
 from dungeon_tiles import Tile, Tiles
 
 class RogueLikeDefaults():
+    ''' Main class that handles all the basics of the dungeon creation. 
+    Extend this to use the features'''
 
     def __init__(self, height = 50, width = 50, grid_size = 40, fps = 5):
+        '''
+        @Height: Number of tiles on the Y axis
+        @Width: Number of tiles on the X axis
+        @Grid_Size: Size of the each tile
+        @FPS: Number of times the UI will be re-drawn in a second
+        '''
+
         self.height = height
         self.width = width
 
@@ -25,6 +34,7 @@ class RogueLikeDefaults():
         self.tiles : List[List[Tile]]= [[Tiles.EMPTY_BLOCK] * width for _ in range(height)]
 
     def start(self) :
+        '''Starts the UI and draws the tiles'''
         pygame.init()
         self.SCREEN = pygame.display.set_mode((self.window_width, self.window_height))
         self.CLOCK = pygame.time.Clock()
@@ -33,7 +43,7 @@ class RogueLikeDefaults():
         while True:
             self.CLOCK.tick(self.FPS)
             self.__drawGrid()
-            self.drawDungeon()
+            self.update()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -42,6 +52,7 @@ class RogueLikeDefaults():
             pygame.display.update()
 
     def __drawGrid(self):
+        '''Draws the tiles every frame. Don't change this'''
         for x in range(self.width):
             for y in range(self.height):
                 tile = self.tiles[x][y]
@@ -53,17 +64,18 @@ class RogueLikeDefaults():
                 rect = pygame.Rect(tile_x, tile_y, tile_size, tile_size)
                 pygame.draw.rect(self.SCREEN, tile.color, rect, 1)
 
-        '''for x in range(0, self.window_width, self.grid_size):
-            for y in range(0, self.window_height, self.grid_size):
-                block_pos_x = x + (self.grid_size - self.empty_block_size) / 2
-                block_pos_y = y + (self.grid_size - self.empty_block_size) / 2
-                rect = pygame.Rect(block_pos_x, block_pos_y, self.empty_block_size, self.empty_block_size)
-                pygame.draw.rect(self.SCREEN, Color.WHITE, rect, 1)'''
 
 
-    def drawRectangle(self, x: int, y: int, width: int, height: int, color: Tuple = Color.WHITE):
-        rect = pygame.Rect(x, y, width, height)
-        pygame.draw.rect(self.SCREEN, color, rect, 1)
+    def createRoom(self, x, y, height, width, color):
+        '''Creates a room from the given @height, @width, @color.
+        Pivot point is top left corner.
+        '''
 
-    def drawDungeon(self):
+
+
+
+    
+    def update(self):
+        '''Will be called every frame. If you want to do 
+        changes dynamically in every frame, extend this function'''
         pass
