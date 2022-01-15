@@ -1,19 +1,20 @@
 # Default Modules
 import sys
+from typing import List
 
 # Licensed Modules
-from typing import List, Tuple
 import pygame
 
 # Custom Modules
 from color_constants import Color
-from dungeon_tiles import Tile, Tiles
+from dungeon_tiles import Tiles, Tile
+from dungeon_parts import DungeonPart
 
 class RogueLikeDefaults():
     ''' Main class that handles all the basics of the dungeon creation. 
     Extend this to use the features'''
 
-    def __init__(self, height = 50, width = 50, grid_size = 40, fps = 5):
+    def __init__(self, height = 50, width = 50, grid_size = 40, fps = 1):
         '''
         @Height: Number of tiles on the Y axis
         @Width: Number of tiles on the X axis
@@ -31,7 +32,9 @@ class RogueLikeDefaults():
 
         self.FPS = fps
 
-        self.tiles : List[Tiles] = None
+        self.dungeon_parts : List[DungeonPart] = []
+
+        return
 
     def start(self) :
         '''Starts the UI and draws tiles'''
@@ -45,7 +48,7 @@ class RogueLikeDefaults():
             
             # Call drawing methods
             self.__drawGrid()
-            self.__drawTiles()
+            self.__drawDungeonParts()
 
             # Call update function for extra functions..
             self.update()  
@@ -58,6 +61,8 @@ class RogueLikeDefaults():
 
             pygame.display.update()
 
+        return
+
     def __drawGrid(self):
         '''Draws the tiles every frame. Don't change this'''
         for x in range(self.width):
@@ -68,7 +73,7 @@ class RogueLikeDefaults():
                 # Apply size reduction based on ratio
                 tile_size = (self.grid_size/100) * tile.size_ratio 
                 
-                # Adjust tile locations
+                # Adjust tile locations and align it to the center based on the size
                 tile_x = (x * self.grid_size) + (self.grid_size - tile_size) / 2
                 tile_y = (y * self.grid_size) + (self.grid_size - tile_size) / 2
                 
@@ -76,11 +81,39 @@ class RogueLikeDefaults():
                 rect = pygame.Rect(tile_x, tile_y, tile_size, tile_size)
                 pygame.draw.rect(self.SCREEN, tile.color, rect, 1)
 
-    def __drawTiles(self):
-        '''Draws the tiles every frame. Don't change this'''
-        pass
+        return
+
+    def __drawDungeonParts(self):
+        '''Draws the placed dungeon_parts every frame. Don't change this'''
+        
+        for dungeon_part in self.dungeon_parts:
+            tiles = dungeon_part.tiles
+            
+            for x in range(len(tiles)):
+                for y in range(len(tiles[0])):
+                    # Type casting
+                    tile : Tile = tiles[x][y]
+                    
+                    if tile == Tiles.IGNORE:
+                        '''If tile type is ignore, then don't do 
+                        anything and continue to check other tiles'''
+                        continue
+
+                    # Apply size reduction based on ratio
+                    tile_size = (self.grid_size/100) * tile.size_ratio
+
+                    # Adjust tile locations and align it to the center based on the size
+                    # (x/y + dungeon_part.x/y) -> Relative position to World Position
+                    tile_x = ((x + dungeon_part.x) * self.grid_size) + (self.grid_size - tile_size) / 2
+                    tile_y = ((y + dungeon_part.y) * self.grid_size) + (self.grid_size - tile_size) / 2
+                    
+                    # Draw the rect
+                    rect = pygame.Rect(tile_x, tile_y, tile_size, tile_size)
+                    pygame.draw.rect(self.SCREEN, tile.color, rect, 1)
+
+        return
     
     def update(self):
         '''Will be called every frame. If you want to do 
         changes dynamically in every frame, extend this function'''
-        pass
+        return
