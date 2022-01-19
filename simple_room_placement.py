@@ -70,7 +70,7 @@ class SimpleRoomPlacement(RogueLikeDefaults):
         return True
 
     def update(self):
-        # Create rooms in every tick
+        # Create rooms
         if len(self.dungeon_parts) < self.num_rooms:
             r_width = randint(MIN_ROOM_WIDTH, MAX_ROOM_WIDTH)
             r_height = randint(MIN_ROOM_HEIGHT, MAX_ROOM_HEIGHT)

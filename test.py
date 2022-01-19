@@ -1,24 +1,31 @@
-'''first_pos = (3,2)
-second_pos = (7,7)
+'''from turtle import width
 
-width = abs(first_pos[0] - second_pos[0]) + 1
-height = abs(first_pos[1] - second_pos[1]) + 1
 
-print("width: ", width, " height: ", height)
+matrix = [
+    [0,1,1,2],
+    [0,5,0,0],
+    [2,0,3,3]]
 
-tiles = [["x"] * width for _ in range(height)]
+def checkNeighbours(matrix, x ,y):
+    height = len(matrix)
+    width = len(matrix[0])
 
-print(len(tiles), " " , print(len(tiles[0])))'''
+    for s_x in range(-1,2):
+        for s_y in range()
+    if x < 0 or x >= width and y < 0 and y >= height:
+        continue
+    pass
 
-room_layout = '''\
-    x x x x
-    x o o D
-    x o o x x
-    x o o o x
-    x x x x x
-'''.splitlines()
+def matrixElementSum(matrix):
+    print (len(matrix), len(matrix[0]))
+    pass
 
-room_layout = [[i for i in line.split()] for line in room_layout]
-for y, row in enumerate(room_layout):
-    print("x1:", 0, "x2:", len(row) - 1, end = " <-> ")
-    print("y1:", 0, "y2:", len(room_layout) - 1)
+if __name__ == "__main__":
+    matrixElementSum(matrix)'''
+
+a = [2,3]
+
+for i in a:
+    if i == 3:
+        a.append(4)
+    print(i)

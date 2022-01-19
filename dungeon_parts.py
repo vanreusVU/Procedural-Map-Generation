@@ -91,11 +91,43 @@ class Room(DungeonPart):
                     self.doors.append(Door(x,y))
         return
     
-    def __isCornerPiece(self):
+    def __isCornerWallPiece(self, x, y):
         '''
-        Check if the tile is a corner piece. To avoid placing doors on corner pieces
+        Check if the Tiles.Wall is a corner piece. To avoid placing doors on corner pieces and next to each other
         '''
-        pass
+
+        '''To wall piece to not be a corner. It should have continuing pieces either along the x or y axis
+        C = piece to check
+        o = empty/none blocking tile
+        x = wall tile
+
+        Not corner cases:
+        case 1:          case 2:
+            o x o           o o o
+            o C o           x C x
+            o x o           o o o
+        '''
+        vertical_sum = 0
+        horizontal_sum = 0
+
+        # Could be done way simpler, but wanted to do it this way for the fun of it
+        for i in range(-1,2):
+            check_x = x + i
+            check_y = y + i
+            
+            # Weather the piece to be check is out of the bounds
+            if check_x >= 0 and check_x < self.width:
+                if self.tiles[x][check_y] == Tiles.WALL:
+                    vertical_sum += 1
+            
+            if check_y >= 0 and check_y < self.height:
+                if self.tiles[check_x][y] == Tiles.WALL:
+                    horizontal_sum += 1
+
+        if (vertical_sum == 3 and horizontal_sum <= 1) or (vertical_sum <= 1 and horizontal_sum == 3):
+            return False
+
+        return True 
 
     def __createRandomDoors(self):
         '''
@@ -105,6 +137,8 @@ class Room(DungeonPart):
         
         # Calculate the perimeter (-2) is for shared pieces
         num_walls = (self.height * 2) + ((self.width - 2) * 2)
+
+        # TODO: if random_loc is not a corner piece create a different random loc
 
         # Select random door locations
         while(len(room_locs) < self.num_doors):
