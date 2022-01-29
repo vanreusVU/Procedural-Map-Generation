@@ -1,5 +1,4 @@
 # Default Modules
-from turtle import width
 from typing import List
 from random import randrange
 
@@ -14,16 +13,26 @@ class DungeonPart():
     <dungeon_defaults.py>.RogueLikeDefaults.__drawDungeonParts()
     '''
 
-    def __init__(self) -> None:
+    def __init__(self, x : int, y : int, dungeon_tiles : List[List[Tiles]]) -> None:
         '''Just crates the template variables'''
 
         # Location of the pivot point (upper left corner)
         # This will be used to align the parts location on the grid
-        self.x : int = 0
-        self.y : int = 0
+        self.x : int = x
+        self.y : int = y
+
+        # Current dungeon tiles
+        self.dungeon_tiles = dungeon_tiles
 
         # Tiles of the dungeon part. Mark the empty parts as Tiles.Ignore
         self.tiles : List[List[Tile]] = []
+        return
+
+    def afterInit(self):
+        '''
+        Call this after creating the dungen_parts if you want to make any changes after the main init
+        Example in @Room Class with <simple_room_placement.py>
+        '''
         return
 
 class Door():
@@ -42,18 +51,14 @@ class Room(DungeonPart):
     Creates a room from the given @height, @width, @color.
     Pivot point is top left corner.
     '''
-    def __init__(self, x: int, y: int, height: int, width: int, num_doors: int, wall_color: Color = None):
+    def __init__(self, x: int, y: int, height: int, width: int, num_doors: int, dungeon_tiles : List[List[Tiles]], wall_color: Color = None):
         '''
         @x, @y: relative location of the pivot (top left corner) of the room
         @height, @width: height and width of the room in tiles
         @num_doors: number of doors for the room to have
         @wall_color: overrides the Tiles.Wall's default color.
         '''
-        DungeonPart.__init__(self)
-
-        # Location info
-        self.x = x
-        self.y = y
+        DungeonPart.__init__(self, x, y, dungeon_tiles)
         
         # Size info
         self.height = height
@@ -71,14 +76,18 @@ class Room(DungeonPart):
         for x in range(1,self.height - 1):
             self.tiles[x][1: self.width - 1] = [Tiles.PATH] * (self.width - 2) 
         
-        # Create random doors based @self.num_doors
-        self.__createRandomDoors()
         # Quick access for the doors.
-        self.doors = []
-        # Load doors from the self.tiles
-        self.__loadDoors()
+        self.doors : List[Door] = []
 
         return
+
+    def afterInit(self):
+        '''In this case add doors to the room'''
+
+        # Create random doors based @self.num_doors
+        self.__createRandomDoors()
+        # Load doors from the self.tiles
+        self.__loadDoors()
 
     def __loadDoors(self) -> List[Door]:
         '''
@@ -91,9 +100,54 @@ class Room(DungeonPart):
                     self.doors.append(Door(x,y))
         return
     
-    def __isCornerWallPiece(self, x, y):
+
+    def checkAlignedBlocks(self, x, y, tiles):
         '''
-        Check if the Tiles.Wall is a corner piece. To avoid placing doors on corner pieces and next to each other
+        Checks the number of vertically and horizontally adjacent blocking tiles around the pivot
+        
+          V = Vertical check
+        O X O
+        X P X H = Horizontal Check
+        O X O
+
+        P = pivot
+        X = tiles to check
+        O = ignore
+
+        @x, @y: Location to check for aligned blocks
+        @tiles: 2D matrix to check
+
+        Returns a tuple of verticall and horizontal sums
+        [0] = Number of blocking tiles horizontally
+        [1] = Number of blocking tiles vertically
+        '''
+
+        vertical_sum = 0
+        horizontal_sum = 0
+        
+        for i in range(-1,2):
+            check_x = x + i
+            check_y = y + i
+
+            # Ignore the center part
+            if i == 0:
+                continue
+
+            if check_y >= 0 and check_y < len(tiles[0]): 
+                if tiles[x][check_y] in Tiles.BLOCKING_TILES:
+                    vertical_sum += 1
+
+            if check_x >= 0 and check_x < len(tiles):
+                if tiles[check_x][y] in Tiles.BLOCKING_TILES:
+                    horizontal_sum += 1
+
+        # print(horizontal_sum, vertical_sum)
+        return (horizontal_sum, vertical_sum)
+    
+    def canPlaceDoor(self, x, y) -> bool:
+        '''
+        Checks if the door is placeable at the given location.
+        Avoids placing doors on corner pieces, next to each other and places where the door will be blocked
         '''
 
         '''To wall piece to not be a corner. It should have continuing pieces either along the x or y axis
@@ -106,60 +160,60 @@ class Room(DungeonPart):
             o x o           o o o
             o C o           x C x
             o x o           o o o
+
+        Corner case:
+        case 1:
+            o x o          
+            o C x         
+            o o o         
         '''
-        vertical_sum = 0
-        horizontal_sum = 0
 
-        # Could be done way simpler, but wanted to do it this way for the fun of it
-        for i in range(-1,2):
-            check_x = x + i
-            check_y = y + i
-            
-            # Weather the piece to be check is out of the bounds
-            if check_x >= 0 and check_x < self.width:
-                if self.tiles[x][check_y] == Tiles.WALL:
-                    vertical_sum += 1
-            
-            if check_y >= 0 and check_y < self.height:
-                if self.tiles[check_x][y] == Tiles.WALL:
-                    horizontal_sum += 1
+        # Check for corner pieces and placing next to another door
+        local_check = self.checkAlignedBlocks(x,y,self.tiles)
 
-        if (vertical_sum == 3 and horizontal_sum <= 1) or (vertical_sum <= 1 and horizontal_sum == 3):
+        if (local_check[0] >= 1 and local_check[1] == 0) or (local_check[1] >= 1 and local_check[0] == 0):
             return False
 
-        return True 
+        # Check if the door is being blocked by another dungeon tile
+        world_check = self.checkAlignedBlocks(x + self.x, y + self.y,self.dungeon_tiles)
+
+        if (world_check[0] >= 1 and world_check[1] == 0) or (world_check[1] >= 1 and world_check[0] == 0):
+            return False
+
+        ''' print("LC_H:",local_check[0],"LC_V",local_check[1])
+        print("WC_H:",world_check[0],"WC_V",world_check[1])'''
+        return True
 
     def __createRandomDoors(self):
         '''
         Creates doors on random locations around the walls based on the @self.num_rooms
         '''
         room_locs = []
-        
-        # Calculate the perimeter (-2) is for shared pieces
-        num_walls = (self.height * 2) + ((self.width - 2) * 2)
 
-        # TODO: if random_loc is not a corner piece create a different random loc
-
-        # Select random door locations
-        while(len(room_locs) < self.num_doors):
-            random_loc = randrange(0, num_walls)
-            
-            # Make sure that the random_loc doesn't already exists
-            if random_loc in room_locs:
-                continue
-
-            room_locs.append(random_loc)
-        
-        # Set the tiles
-        wall_counter = 0
+        # Get all the wall locations and index them by adding them to an array
+        # Tuple (x,y) for wall locations
+        wall_locations = []
         for x in range(len(self.tiles)):
             for y in range(len(self.tiles[x])):
                 if self.tiles[x][y] == Tiles.WALL:
-                    if wall_counter in room_locs:
-                        self.tiles[x][y] = Tiles.DOOR
+                    wall_locations.append((x,y))
 
-                    wall_counter += 1
-                    
+        # Select random door locations
+        while(len(self.doors) < self.num_doors):
+            random_loc = randrange(0, len(wall_locations))
+            selected_location = wall_locations[random_loc]
+            
+            # Could be changed with a coordinate class
+            x = selected_location[0]
+            y = selected_location[1]
+
+            # If its already a door, corner wall piece or next to an another door then find another location
+            if self.canPlaceDoor(x,y) == True or self.tiles[x][y] != Tiles.WALL:
+                continue
+
+            self.doors.append(Door(x,y))
+            self.tiles[x][y] = Tiles.DOOR
+        
         return
 
 class CustomRoom(Room):
@@ -167,7 +221,7 @@ class CustomRoom(Room):
     A room where you create your custom room by giving the room scheme as input
     '''
 
-    def __init__(self, x: int, y: int, room_layout : str):
+    def __init__(self, x: int, y: int, room_layout : str, dungeon_tiles : List[List[Tiles]]):
         '''
         @x, @y: relative location of the pivot (top left corner) of the room
         @room_layout: room's layout in string. 
@@ -185,6 +239,7 @@ class CustomRoom(Room):
         x o o D
         x x x x
         '''
+        DungeonPart.__init__(self, x, y, dungeon_tiles)
 
         # Seperates the string into 2d array and crates a new array based on the values 
         self.tiles = [[self.__layoutToTile(i) for i in line.split()] for line in room_layout.splitlines()]
@@ -217,14 +272,14 @@ class Corridor(DungeonPart):
     Base class to create corridors from the given @start_pos to @end_pos, @color.
     Only consists the basic variables. Not functional. Use the other variations instead
     '''
-    def __init__(self, start_x: int, start_y: int, end_x: int, end_y:int, color: Color = None):
+    def __init__(self, start_x: int, start_y: int, end_x: int, end_y:int, dungeon_tiles : List[List[Tiles]], color: Color = None):
         '''
         @start_x, @start_y: starting position of the corridor
         @end_x, @end_y: final position of the corridor
         @height, @width: height and width of the room in tiles
         @color: overrides the Tiles default color.
         '''
-        DungeonPart.__init__(self)
+        DungeonPart.__init__(self, -1, -1, dungeon_tiles)
 
         # Location info
         # Start position
@@ -256,7 +311,7 @@ class AS_Corridor(Corridor):
     Only consists the basic variables. Not functional. Use the other variations instead
     '''
 
-    def __init__(self, start_x: int, start_y: int, end_x: int, end_y: int, dungeon_parts : List[DungeonPart], color: Color = None):
+    def __init__(self, start_x: int, start_y: int, end_x: int, end_y: int,  dungeon_tiles : List[List[Tiles]], color: Color = None):
         '''
         @start_x, @start_y: relative starting position of the corridor
         @end_x, @end_y: final position of the corridor
@@ -265,7 +320,7 @@ class AS_Corridor(Corridor):
         By default use this -> <dungeon_defaults.py>.RogueLikeDefaults.dungeon_parts
         @color: overrides the Tiles default color.
         '''
-        Corridor.__init__(start_x, start_y, end_x, end_y, color)
+        Corridor.__init__(start_x, start_y, end_x, end_y, dungeon_tiles, color)
 
     def createCorridor(self):
         '''More info on A*: https://en.wikipedia.org/wiki/A*_search_algorithm'''

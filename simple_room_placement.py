@@ -38,14 +38,38 @@ class SimpleRoomPlacement(RogueLikeDefaults):
         '''
 
         RogueLikeDefaults.__init__(self,
-            height=20,
-            width=20,
+            height=10,
+            width=10,
             grid_size=40,
             fps=10)
 
         # Setting up room settings
         self.num_rooms = num_rooms
         self.custom_rooms = custom_rooms
+        
+
+    def createRooms(self):
+        # Create rooms
+        while len(self.dungeon_parts) < self.num_rooms:
+            r_width = randint(MIN_ROOM_WIDTH, MAX_ROOM_WIDTH)
+            r_height = randint(MIN_ROOM_HEIGHT, MAX_ROOM_HEIGHT)
+            
+            r_x = randrange(0, (self.width - r_width) - 1)
+            r_y = randrange(0, (self.height - r_height) - 1)
+            
+            # Unused doors will be removed while creating the corridors
+            r_doors = randint(MIN_ROOM_DOOR, MAX_ROOM_DOOR)
+
+            rand_room = Room(r_x, r_y, r_height, r_width, r_doors, self.tiles)
+            
+            # Add the created room if it's placeable
+            if self.canPlace(rand_room) == True:
+                self.addDungenPart(rand_room)
+
+        # Update the tiles
+        for part in self.dungeon_parts:
+            print("Adding doors")
+            part.afterInit()
 
     def canPlace(self, part_to_place: DungeonPart) -> bool:
         '''
@@ -69,23 +93,13 @@ class SimpleRoomPlacement(RogueLikeDefaults):
         
         return True
 
-    def update(self):
-        # Create rooms
-        if len(self.dungeon_parts) < self.num_rooms:
-            r_width = randint(MIN_ROOM_WIDTH, MAX_ROOM_WIDTH)
-            r_height = randint(MIN_ROOM_HEIGHT, MAX_ROOM_HEIGHT)
-            
-            r_x = randrange(0, (self.width - r_width) - 1)
-            r_y = randrange(0, (self.height - r_height) - 1)
-            
-            # Unused doors will be removed while creating the corridors
-            r_doors = randint(MIN_ROOM_DOOR, MAX_ROOM_DOOR)
+    def begin(self):
+        # Create the rooms
+        self.createRooms() 
+        return
 
-            rand_room = Room(r_x, r_y, r_height, r_width, r_doors)
-            
-            # Add the created room if it's placeable
-            if self.canPlace(rand_room) == True:
-                self.addDungenPart(rand_room)
+    def update(self):
+        return
         
 def main():
     srp = SimpleRoomPlacement(5)

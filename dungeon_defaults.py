@@ -10,6 +10,9 @@ from color_constants import Color
 from dungeon_tiles import Tiles, Tile
 from dungeon_parts import DungeonPart
 
+# Print the todo list
+import todos
+
 class RogueLikeDefaults():
     ''' Main class that handles all the basics of the dungeon creation. 
     Extend this to use the features'''
@@ -44,6 +47,8 @@ class RogueLikeDefaults():
         self.CLOCK = pygame.time.Clock()
         self.SCREEN.fill(Color.BLACK)
 
+        self.begin()
+        
         while True:
             self.CLOCK.tick(self.FPS)
             
@@ -113,8 +118,6 @@ class RogueLikeDefaults():
                     # Add the dungeon_part.tile to the self.tiles
                     self.tiles[tile_x][tile_y] = tile
 
-
-
         return
     
     def addDungenPart(self, dungeon_part : DungeonPart):
@@ -123,6 +126,10 @@ class RogueLikeDefaults():
 
     def resetTiles(self):
         self.tiles = [[Tiles.EMPTY_BLOCK] * self.width for _ in range(self.height)] 
+        return
+
+    def begin(self):
+        '''Will be called once after the init'''
         return
 
     def update(self):

@@ -25,3 +25,7 @@ class Tiles():
     PATH = Tile(80, Color.WHITE) # Path/Corridor
     DOOR = Tile(80, Color.BROWN) # Door
     IGNORE = None # Means ignore this tile while drawing and keep whatever is already there
+
+    # Tile groups
+    BLOCKING_TILES = [WALL, DOOR]
+    SAFE_TILES = [IGNORE, EMPTY_BLOCK, PATH]
