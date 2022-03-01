@@ -12,6 +12,7 @@ from dungeon_parts import DungeonPart
 
 # Print the todo list
 import todos
+from utilities import Coordinate
 
 class RogueLikeDefaults():
     ''' Main class that handles all the basics of the dungeon creation. 
@@ -37,7 +38,7 @@ class RogueLikeDefaults():
 
         self.dungeon_parts : List[DungeonPart] = []
 
-        self.tiles = [[Tiles.EMPTY_BLOCK] * self.width for _ in range(self.height)] 
+        self.dungeon_tiles = [[Tiles.EMPTY_BLOCK] * self.width for _ in range(self.height)] 
         return
 
     def start(self) :
@@ -56,7 +57,7 @@ class RogueLikeDefaults():
             # (We reset everytime so that if there are any changes we can draw from the begining)
             self.resetTiles()
 
-            # Add dungeon parts to @self.tiles
+            # Add dungeon parts to @self.dungeon_tiles
             self.__dungeonPartsToTiles()
 
             # Call drawing methods
@@ -77,34 +78,36 @@ class RogueLikeDefaults():
 
     def __drawTiles(self):
         '''Draws the tiles every frame. Don't change this'''
-        for x in range(len(self.tiles)):
-            for y in range(len(self.tiles[x])):
+        for y in range(len(self.dungeon_tiles)):
+            for x in range(len(self.dungeon_tiles[y])):
                 # Get tile
-                tile = self.tiles[x][y]
+                tile = self.dungeon_tiles[y][x]
 
                 # Apply size reduction based on ratio
                 tile_size = (self.grid_size/100) * tile.size_ratio 
                 
-                # Adjust tile locations and align it to the center based on the size
-                tile_x = (x * self.grid_size) + (self.grid_size - tile_size) / 2
-                tile_y = (y * self.grid_size) + (self.grid_size - tile_size) / 2
-                
+                # Adjust tile locations and align it to the center based on the size               
+                tile_loc = Coordinate(
+                    (x * self.grid_size) + (self.grid_size - tile_size) / 2,
+                    (y * self.grid_size) + (self.grid_size - tile_size) / 2
+                )
+
                 # Draw the rect
-                rect = pygame.Rect(tile_x, tile_y, tile_size, tile_size)
+                rect = pygame.Rect(tile_loc.X, tile_loc.Y, tile_size, tile_size)
                 pygame.draw.rect(self.SCREEN, tile.color, rect, 1, 0)
 
         return
 
     def __dungeonPartsToTiles(self):
-        '''Projects the dungeon parts onto the @self.tiles'''
+        '''Projects the dungeon parts onto the @self.dungeon_tiles'''
         
         for dungeon_part in self.dungeon_parts:
             tiles = dungeon_part.tiles
             
-            for x in range(len(tiles)):
-                for y in range(len(tiles[0])):
+            for y in range(len(tiles)):
+                for x in range(len(tiles[y])):
                     # Type casting
-                    tile : Tile = tiles[x][y]
+                    tile : Tile = tiles[y][x]
                     
                     if tile == Tiles.IGNORE:
                         '''If tile type is ignore, then don't do 
@@ -112,20 +115,27 @@ class RogueLikeDefaults():
                         continue
 
                     # (x/y + dungeon_part.x/y) -> Relative position to World Position
-                    tile_x = (x + dungeon_part.x) 
-                    tile_y = (y + dungeon_part.y)
+                    world_loc = Coordinate(
+                        (x + dungeon_part.pivot_loc.X),
+                        (y + dungeon_part.pivot_loc.Y)
+                    )
 
-                    # Add the dungeon_part.tile to the self.tiles
-                    self.tiles[tile_x][tile_y] = tile
+                    # Add the dungeon_part.tile to the self.dungeon_tiles
+                    self.dungeon_tiles[world_loc.Y][world_loc.X] = tile
 
         return
     
     def addDungenPart(self, dungeon_part : DungeonPart):
-        ''' Add dungeon part to the self.dungeon_parts '''
+        ''' Add dungeon part to the self.dungeon_parts and then project it to the tiles '''
         self.dungeon_parts.append(dungeon_part)
 
+        # Add dungeon parts to @self.dungeon_tiles
+        # We are doing this call here because room creation happens in the begin function thus
+        # operations on self.dungeon_tiles would return empty without the call here (before the initial loop)
+        self.__dungeonPartsToTiles()
+
     def resetTiles(self):
-        self.tiles = [[Tiles.EMPTY_BLOCK] * self.width for _ in range(self.height)] 
+        self.dungeon_tiles = [[Tiles.EMPTY_BLOCK] * self.width for _ in range(self.height)] 
         return
 
     def begin(self):

@@ -1,10 +1,12 @@
-tiles = [[0,0,0,0],
-         [0,1,1,1],
-         [0,2,0,1],
-         [0,1,1,1]]
+import math
+from typing import List
+from dungeon_tiles import Tiles
+from utilities import Coordinate, Directions
 
-for x in range(len(tiles)):
-    for y in range(len(tiles[y])):
-        print(tiles[y][x], end=" ")
-    print()
+matrix = [
+    ["x","x","x","x"],
+    ["x","x","x","x"],
+    ["x","x","x","x"],
+    ["x","x","x","x"]
+]
 
