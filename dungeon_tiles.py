@@ -20,7 +20,7 @@ class Tiles():
     Tile constants to be used in creating the dungeon.
     Each constants is derived from @Tile class
     '''
-    EMPTY_BLOCK = Tile(20, Color.WHITE) # Means its a out of map empty block
+    EMPTY_BLOCK = Tile(5, Color.WHITE) # Means its a out of map empty block
     WALL = Tile(100, Color.RED) # Wall/Room
     PATH = Tile(80, Color.WHITE) # Path/Corridor
     DOOR = Tile(80, Color.BROWN) # Door

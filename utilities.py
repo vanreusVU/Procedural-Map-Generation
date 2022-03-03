@@ -18,6 +18,11 @@ class Coordinate():
     def __str__(self) -> str:
         return f"X: {self.X}, Y: {self.Y}"
 
+    def __add__(self, add_me):
+        x = self.X + add_me.X
+        y = self.Y + add_me.Y
+        return Coordinate(x,y)
+
 class MinMax():
     ''' Simple MinMax class'''
 
@@ -40,7 +45,7 @@ class Directions(Enum):
 
 
 class Node():
-    ''' A class that represents the nodes in a tile map '''
+    ''' A class that represents the nodes in a tile map to be used for A* pathfinding algorithm '''
 
     def __init__(self, location : Coordinate, g_cost : float = None, h_cost : float = None):
         # Coordinates of the current node
@@ -49,6 +54,8 @@ class Node():
         # Cost of the current node
         self.g_cost : float = g_cost 
         self.h_cost : float = h_cost
+
+        self.coming_from : Node = None
         
         if g_cost == None or h_cost == None:
             self.f_cost : float = None
@@ -125,18 +132,27 @@ def isNodeTraversed(location : Coordinate, steps : List[Node]):
 
     return False
 
-def aStar(curr : Coordinate, goal : Coordinate, steps : List[Node], tiles : List[List[Tiles]], tiles_to_follow : List[Tiles]) -> List:
+def aStar(curr : Coordinate, goal : Coordinate, steps : List[Node], tiles : List[List[Tiles]], tiles_to_follow : List[Tiles]) -> List[Coordinate]:
     '''
     Gets the shorthest path between curr and goal by using A* Pathfinding algorithm.
     '''
     # Copy the lists
     steps = steps[:]
 
-    steps.append(Node(curr))
+    # Add the starting node
+    if len(steps) == 0:
+        steps.append(Node(curr))
     
     # Check if its the goal
-    if curr.X == goal.X and curr.Y == goal.Y:   
-        return [curr]
+    if curr.X == goal.X and curr.Y == goal.Y:
+        current_node = steps[len(steps) - 1]
+        shorthest_path = [current_node.location]
+
+        while current_node.coming_from != None:
+            shorthest_path.insert(0, current_node.coming_from.location)
+            current_node = current_node.coming_from
+
+        return shorthest_path
 
     # List of nodes nodes. F_cost = (sum of g_cost and h_cost) * 10. the algorithm will be using this to determin which path to take
     neighbours : List[Node] = []
@@ -165,6 +181,8 @@ def aStar(curr : Coordinate, goal : Coordinate, steps : List[Node], tiles : List
     steps[len(steps) - 1].neighbours = neighbours[:]
 
     min_node : Node = None
+    coming_from : Node = None
+
     for i in range(len(steps)):
         for j in range(len(steps[i].neighbours)):
             # If the neighbour is already visited
@@ -174,22 +192,27 @@ def aStar(curr : Coordinate, goal : Coordinate, steps : List[Node], tiles : List
             # If its empty give it the first element
             if min_node == None:
                 min_node = steps[i].neighbours[j]
+                coming_from = steps[i]
                 continue
             
             if steps[i].neighbours[j].f_cost < min_node.f_cost :
                 min_node = steps[i].neighbours[j]
+                coming_from = steps[i]
             elif steps[i].neighbours[j].f_cost == min_node.f_cost:
                 if steps[i].neighbours[j].h_cost < min_node.h_cost:
                     min_node = steps[i].neighbours[j]
-
+                    coming_from = steps[i]
+    
+    # If a min node exists (there should be)
     if min_node != None:
-        astar = aStar(min_node.location, goal, steps, tiles, tiles_to_follow)
-        short_path = astar
-        short_path.append(curr)
-        return short_path
-    else:
-        print("I fucked up? A*")
-        return None
+        min_node.coming_from = coming_from
+        steps.append(min_node)
+
+        return aStar(min_node.location, goal, steps, tiles, tiles_to_follow)
+         
+    
+    print("A* Problem!")
+    return None
 
 
 def calculateDistance(curr : Coordinate, goal : Coordinate, steps : List[Coordinate], tiles : List[List[Tiles]], tiles_to_follow : List[Tiles]):

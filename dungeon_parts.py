@@ -8,7 +8,7 @@ from torch import le
 # Custom Modules
 from color_constants import Color
 from dungeon_tiles import Tile, Tiles
-from utilities import Coordinate, Directions
+from utilities import Coordinate, Directions, aStar, debugTile
 
 class DungeonPart():
     '''
@@ -275,32 +275,27 @@ class CustomRoom(Room):
 
 class Corridor(DungeonPart):
     '''
-    Base class to create corridors from the given @start_pos to @end_pos, @color.
+    Base class to create corridors from the given @start_pos to @end_pos by using the A* pathfinding algorithm.
     Only consists the basic variables. Not functional. Use the other variations instead
     '''
-    def __init__(self, start_x: int, start_y: int, end_x: int, end_y:int, color: Color = None):
+    def __init__(self, start : Coordinate, end : Coordinate, color: Color = None):
         '''
         @start_x, @start_y: starting position of the corridor
         @end_x, @end_y: final position of the corridor
         @height, @width: height and width of the room in tiles
         @color: overrides the Tiles default color.
         '''
-        DungeonPart.__init__(self, -1, -1)
+        DungeonPart.__init__(self, 0, 0)
 
         # Location info
         # Start position
-        self.start_x = start_x
-        self.start_y = start_y
+        self.start = start
 
         # End position
-        self.end_x = end_x
-        self.end_y = end_y
-
-        self.width = abs(start_x - end_x)
-        self.height = abs(start_y - end_y)
+        self.end = end
 
         # Tiles
-        self.tiles = [[Tiles.IGNORE] * self.width for _ in range(self.height)]
+        self.tiles = []
 
     
     def afterInit(self, dungeon_tiles: List[List[Tiles]]):
@@ -309,35 +304,57 @@ class Corridor(DungeonPart):
         # Assign dungeon tiles
         self.dungeon_tiles = dungeon_tiles
 
+        # Adjust tiles size
+        self.tiles = [[Tiles.IGNORE] * len(self.dungeon_tiles[0]) for _ in range(len(self.dungeon_tiles))]
+
+        # Create the corridor
         self.createCorridor()
+
 
     def createCorridor(self):
         '''
         Gets called during __init__
         Extend this create the corridor by filling its shape in @self.tiles
         '''
-        return None
 
-class AS_Corridor(Corridor):
-    '''
-    AS Corridor: Crates a corridor from the given @start_pos to @end_pos by using the A* pathfinding algorithm.
-    Only consists the basic variables. Not functional. Use the other variations instead
-    '''
+        #debugTile(self.dungeon_tiles,multiple_points=[self.start,self.end])
 
-    def __init__(self, start_x: int, start_y: int, end_x: int, end_y: int, color: Color = None):
-        '''
-        @start_x, @start_y: relative starting position of the corridor
-        @end_x, @end_y: final position of the corridor
-        @height, @width: height and width of the room in tiles
-        @dungeon_parts: Current dungeon parts on the level.
-        By default use this -> <dungeon_defaults.py>.RogueLikeDefaults.dungeon_parts
-        @color: overrides the Tiles default color.
-        '''
-        Corridor.__init__(start_x, start_y, end_x, end_y, color)
+        # print("Applying algorithm")
+        # Get the corridor path
+        corridor_path = aStar(self.start, self.end, [], self.dungeon_tiles, [Tiles.EMPTY_BLOCK, Tiles.DOOR])
+        # print("Applyed algorithm")
 
-    def findPath(self, start : Coordinate, end : Coordinate, h : float):
-        open_nodes = self.du
+        # Convert the path to tiles and get the furthest points of the path to be used later
+        left_corner = None
+        right_corner = None
 
-    def createCorridor(self):
-        '''More info on A*: https://en.wikipedia.org/wiki/A*_search_algorithm'''
+        for coord in corridor_path:
+            self.tiles[coord.Y][coord.X] = Tiles.PATH
+
+            # Get the top left and bottom right corners of the area that contains the corridor
+            if left_corner == None and right_corner == None:
+                left_corner = coord
+                right_corner = coord
+            
+            if coord.X < left_corner.X:
+                left_corner.X = coord.X
+            if coord.Y < left_corner.Y:
+                left_corner.Y = coord.Y   
+
+            if coord.X > right_corner.X:
+                right_corner.X = coord.X
+            if coord.Y > right_corner.Y:
+                right_corner.Y = coord.Y   
+
+ 
+        # Adjust tile dimensions to fit the corridor precisly
+        # debugTile(self.tiles,multiple_points=corridor_path)
+        # self.tiles = [self.tiles[i][left_corner.X:right_corner.X + 1] for i in range(left_corner.Y,right_corner.Y + 1)]
+        # debugTile(self.tiles)
+
+    def fitFromDirection(self, direction : Coordinate):
+        for y in range(len(self.tiles)):
+            for x in range(len(self.tiles[y])):
+                pass
+        
 

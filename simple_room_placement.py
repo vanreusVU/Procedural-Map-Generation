@@ -1,7 +1,7 @@
 # Default Modules
 from turtle import width
 from typing import List
-from random import randint
+from random import randint, randrange
 
 # Copyrighted Modules
 import pygame
@@ -10,20 +10,20 @@ import pygame
 from dungeon_defaults import RogueLikeDefaults
 from color_constants import Color
 from dungeon_tiles import Tiles
-from dungeon_parts import CustomRoom, DungeonPart, Room
-from utilities import aStar, Coordinate, MinMax, debugTile
+from dungeon_parts import CustomRoom, DungeonPart, Room, Corridor, Door
+from utilities import aStar, Coordinate, MinMax, debugTile, distancePythagorean
 
 # Max number of tries to place a room
 MAX_PLACEMANT_TRIES = 500
 
-NUM_ROOMS = MinMax(3,5)
-ROOM_WIDTH = MinMax(3,5)
-ROOM_HEIGHT = MinMax(3,5)
+NUM_ROOMS = MinMax(30,60)
+ROOM_WIDTH = MinMax(5,10)
+ROOM_HEIGHT = MinMax(5,10)
 ROOM_DOOR = MinMax(1,2)
 
-HEIGHT = 15
-WIDTH = 15
-GRID_SIZE = 50
+HEIGHT = 100
+WIDTH = 100
+GRID_SIZE = 10
 FPS = 10
 
 class SimpleRoomPlacement(RogueLikeDefaults):
@@ -52,11 +52,12 @@ class SimpleRoomPlacement(RogueLikeDefaults):
         ''' Create rooms '''
         # Number of tries
         tries = 0
+        rooms_created = 0
 
         # Place rooms until enough rooms have been placed.
         # Will try to place a room @MAX_PLACEMANT_TRIES times and if it's still not a sucess it will 
         # stop placing rooms. The @tries gets reseted after every successfull placement.
-        while len(self.dungeon_parts) < self.num_rooms and tries < MAX_PLACEMANT_TRIES:
+        while rooms_created < self.num_rooms and tries < MAX_PLACEMANT_TRIES:
             r_width = randint(ROOM_WIDTH.MIN, ROOM_WIDTH.MAX)
             r_height = randint(ROOM_HEIGHT.MIN, ROOM_HEIGHT.MAX)
             
@@ -74,18 +75,54 @@ class SimpleRoomPlacement(RogueLikeDefaults):
             # Add the created room if it's placeable
             if self.canPlace(rand_room) == True:
                 self.addDungenPart(rand_room)
+                rooms_created += 1
 
                 # Reset the number of tries
                 tries = 0
 
-        # Update the tiles
+        # Update the rooms
         for part in self.dungeon_parts:
-            print("Adding doors")
-            part.afterInit(self.dungeon_tiles)
+            if isinstance(part,Room):
+                part.afterInit(self.dungeon_tiles)
 
-        # TODO: A* Debug. Remove LATER
+        '''
         shorthest_path = aStar(Coordinate(0,0),Coordinate(WIDTH - 1, HEIGHT - 1),[],self.dungeon_tiles,[Tiles.EMPTY_BLOCK,Tiles.WALL,Tiles.PATH])
-        debugTile(self.dungeon_tiles,multiple_points=shorthest_path)
+        debugTile(self.dungeon_tiles,multiple_points=shorthest_path)'''
+
+    def createCorridors(self):
+        ''' Creates corridors '''
+
+        # Number of tries
+        tries = 0
+        corridors_created = 0
+
+        # Place corridors until all the doors have a connection.
+        # Will try to place a corridor @MAX_PLACEMANT_TRIES times and if it's still not a sucess it will 
+        # stop placing corridors. The @tries gets reseted after every successfull placement.
+        for part in self.dungeon_parts:
+            if isinstance(part,Room):
+                room : Room = part
+                door_to_connect = self.getRandomDoor(room)
+
+                closest_room = self.getClosestRoom(room)
+                door_to_be_connected = self.getRandomDoor(closest_room)
+
+                if door_to_connect != None and door_to_be_connected != None:
+                    corridor = Corridor(door_to_connect.location + room.pivot_loc,door_to_be_connected.location + closest_room.pivot_loc)
+                    door_to_connect.has_corridor = True
+                    door_to_be_connected.has_corridor = True
+
+                    self.addDungenPart(corridor)
+                    corridors_created += 1
+
+                    
+
+        # Update the rooms
+        for part in self.dungeon_parts:
+            if isinstance(part,Corridor):
+                part.afterInit(self.dungeon_tiles)
+        
+        pass
 
     def canPlace(self, part_to_place: DungeonPart) -> bool:
         '''
@@ -109,9 +146,53 @@ class SimpleRoomPlacement(RogueLikeDefaults):
         
         return True
 
+    def getClosestRoom(self, room_to_check : Room) -> Room:
+        '''
+        Returns the closest room to the given room
+        '''
+        closest_room : Room = None
+        closest_room_distance = 0
+
+        if room_to_check == None:
+            return None
+
+        for part in self.dungeon_parts:
+            if isinstance(part,Room) and part != room_to_check:
+                distance = distancePythagorean(room_to_check.pivot_loc, part.pivot_loc)
+                
+                if closest_room == None:
+                    closest_room = part
+                    closest_room_distance = distance
+                    continue
+
+                if distance < closest_room_distance:
+                    closest_room = part
+                    closest_room_distance = distance
+        
+        return closest_room
+
+    def getRandomDoor(self, room_to_check : Room, allow_multiple_connection : bool = False) -> Door:
+        '''
+        Returns a random door from the given room    
+        '''
+
+        if allow_multiple_connection:
+            available_doors = room_to_check.doors
+        else:
+            available_doors = [a for a in room_to_check.doors if a.has_corridor == False]
+        
+        if len(available_doors) > 0:
+            door_to_pick = randrange(0,len(available_doors))
+            return available_doors[door_to_pick]
+        
+        return None
+        
+
     def begin(self):
         # Create the rooms
         self.createRooms() 
+        # Create the corridors
+        self.createCorridors()
         return
 
     def update(self):
