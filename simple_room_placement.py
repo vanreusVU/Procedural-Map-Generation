@@ -11,19 +11,20 @@ from dungeon_defaults import RogueLikeDefaults
 from color_constants import Color
 from dungeon_tiles import Tiles
 from dungeon_parts import CustomRoom, DungeonPart, Room, Corridor, Door
-from utilities import aStar, Coordinate, MinMax, debugTile, distancePythagorean
+from utilities import MinMax, debugTile
+from path_finding import distancePythagorean
 
 # Max number of tries to place a room
 MAX_PLACEMANT_TRIES = 500
 
-NUM_ROOMS = MinMax(30,60)
-ROOM_WIDTH = MinMax(5,10)
-ROOM_HEIGHT = MinMax(5,10)
+NUM_ROOMS = MinMax(5,5)
+ROOM_WIDTH = MinMax(4,5)
+ROOM_HEIGHT = MinMax(4,5)
 ROOM_DOOR = MinMax(1,2)
 
-HEIGHT = 100
-WIDTH = 100
-GRID_SIZE = 10
+HEIGHT = 20
+WIDTH = 20
+GRID_SIZE = 30
 FPS = 10
 
 class SimpleRoomPlacement(RogueLikeDefaults):

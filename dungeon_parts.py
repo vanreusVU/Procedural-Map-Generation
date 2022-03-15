@@ -8,7 +8,8 @@ from torch import le
 # Custom Modules
 from color_constants import Color
 from dungeon_tiles import Tile, Tiles
-from utilities import Coordinate, Directions, aStar, debugTile
+from utilities import Coordinate
+from path_finding import aStar
 
 class DungeonPart():
     '''
