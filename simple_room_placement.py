@@ -1,7 +1,7 @@
 # Default Modules
-from turtle import width
 from typing import List
 from random import randint, randrange
+import time
 
 # Copyrighted Modules
 import pygame
@@ -11,20 +11,21 @@ from dungeon_defaults import RogueLikeDefaults
 from color_constants import Color
 from dungeon_tiles import Tiles
 from dungeon_parts import CustomRoom, DungeonPart, Room, Corridor, Door
-from utilities import MinMax, debugTile
+from utilities import Coordinate, MinMax
 from path_finding import distancePythagorean
+from triangulation import delaunayTriangulation
 
 # Max number of tries to place a room
 MAX_PLACEMANT_TRIES = 500
 
-NUM_ROOMS = MinMax(5,5)
-ROOM_WIDTH = MinMax(4,5)
-ROOM_HEIGHT = MinMax(4,5)
+NUM_ROOMS = MinMax(15,20)
+ROOM_WIDTH = MinMax(4,10)
+ROOM_HEIGHT = MinMax(4,10)
 ROOM_DOOR = MinMax(1,2)
 
-HEIGHT = 20
-WIDTH = 20
-GRID_SIZE = 30
+HEIGHT = 50
+WIDTH = 50
+GRID_SIZE = 10
 FPS = 10
 
 class SimpleRoomPlacement(RogueLikeDefaults):
@@ -47,6 +48,7 @@ class SimpleRoomPlacement(RogueLikeDefaults):
         # Setting up room settings
         self.num_rooms = randint(NUM_ROOMS.MIN, NUM_ROOMS.MAX)
         self.custom_rooms = custom_rooms
+        self.triangulation = []
         
 
     def createRooms(self):
@@ -86,9 +88,18 @@ class SimpleRoomPlacement(RogueLikeDefaults):
             if isinstance(part,Room):
                 part.afterInit(self.dungeon_tiles)
 
-        '''
-        shorthest_path = aStar(Coordinate(0,0),Coordinate(WIDTH - 1, HEIGHT - 1),[],self.dungeon_tiles,[Tiles.EMPTY_BLOCK,Tiles.WALL,Tiles.PATH])
-        debugTile(self.dungeon_tiles,multiple_points=shorthest_path)'''
+    def findRoomConnections(self):
+        ''' Decide on the routes to be connected '''
+        
+        room_coordinates : List[Coordinate] = [Coordinate(part.pivot_loc.X * GRID_SIZE, part.pivot_loc.Y * GRID_SIZE) for part in self.dungeon_parts if isinstance(part, Room)]
+        self.triangulation = delaunayTriangulation(room_coordinates)
+
+    def drawRoomConnections(self):
+        ''' Draw room connections '''
+
+        for triangle in self.triangulation:
+            for edge in triangle.edges:
+                pygame.draw.line(self.SCREEN, Color.RED, edge.p1.getTuple(), edge.p2.getTuple(), 3)
 
     def createCorridors(self):
         ''' Creates corridors '''
@@ -192,8 +203,18 @@ class SimpleRoomPlacement(RogueLikeDefaults):
     def begin(self):
         # Create the rooms
         self.createRooms() 
+        
+        # Make connections
+        self.findRoomConnections()
+
+        # Draw room connections
+        self.drawRoomConnections()
+
+        # Show it couple of seconds
+        time.sleep(2)
+
         # Create the corridors
-        self.createCorridors()
+        #self.createCorridors()
         return
 
     def update(self):

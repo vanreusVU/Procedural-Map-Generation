@@ -42,7 +42,7 @@ class RogueLikeDefaults():
         return
 
     def start(self) :
-        '''Starts the UI and draws tiles'''
+        ''' Starts the UI and draws tiles '''
         pygame.init()
         self.SCREEN = pygame.display.set_mode((self.window_width, self.window_height))
         self.CLOCK = pygame.time.Clock()
