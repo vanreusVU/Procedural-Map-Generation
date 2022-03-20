@@ -51,6 +51,22 @@ class Triangle():
             Edge(self.verticies[1], self.verticies[2]),
             Edge(self.verticies[2], self.verticies[0])
             ]
+        self.pivot_vertex : Coordinate = self._getPivot()
+
+    def _getPivot(self) -> Coordinate:
+        '''
+        We assign the left most vertex as the pivot vertex
+
+        :return: pivot vertex
+        :rtype: Coordinate
+        '''        
+        left_most : Coordinate = self.verticies[0]
+        for vertex in self.verticies:
+            if vertex.X < left_most.X:
+                left_most = vertex
+
+        return left_most
+
 
     def __eq__(self, __o: object) -> bool:
         ''' 
@@ -80,6 +96,12 @@ class Triangle():
 
     def __str__(self) -> str:
         return f"Triangle: \nP1: {self.verticies[0]}\nP2: {self.verticies[1]}\nP3: {self.verticies[2]}"
+
+class Node():
+    ''' Basic tree node '''
+    def __init__(self, vertex : Coordinate) -> None:
+        self.vertex : Coordinate = vertex
+        self.edges : List[Edge] = []
 
 def determinant(matrix : List[List[int]]):
     '''
@@ -273,5 +295,28 @@ def delaunayTriangulation(points : List[Coordinate]) -> List[Triangle]:
         if has_common == True:
             triangulation.remove(triangle)
 
+    # triangulationToTree(triangulation)
     # Return the delaunay triangulation
     return triangulation
+
+def triangulationToTree(triangulation : List[Triangle]):
+    '''
+    Convert triangulation into a tree
+
+    :param triangulation: list of connected triangles
+    :type triangulation: List[Triangle]
+    '''    
+
+    all_edges : List[Edge] = []
+    for triangle in triangulation:
+        for edge in triangle.edges:
+            if edge not in all_edges:
+                all_edges.append(edge)
+
+    nodes : List[Node] = []
+    for edge in all_edges:
+        for node in nodes:
+            # If note doesn't exists
+            if node.vertex != edge.p1 and node.vertex == edge.p2:
+                pass
+    pass

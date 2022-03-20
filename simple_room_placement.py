@@ -18,14 +18,14 @@ from triangulation import delaunayTriangulation
 # Max number of tries to place a room
 MAX_PLACEMANT_TRIES = 500
 
-NUM_ROOMS = MinMax(15,20)
+NUM_ROOMS = MinMax(10,15)
 ROOM_WIDTH = MinMax(4,10)
 ROOM_HEIGHT = MinMax(4,10)
 ROOM_DOOR = MinMax(1,2)
 
-HEIGHT = 50
-WIDTH = 50
-GRID_SIZE = 10
+HEIGHT = 80
+WIDTH = 80
+GRID_SIZE = 15
 FPS = 10
 
 class SimpleRoomPlacement(RogueLikeDefaults):
@@ -94,13 +94,16 @@ class SimpleRoomPlacement(RogueLikeDefaults):
         room_coordinates : List[Coordinate] = [Coordinate(part.pivot_loc.X * GRID_SIZE, part.pivot_loc.Y * GRID_SIZE) for part in self.dungeon_parts if isinstance(part, Room)]
         self.triangulation = delaunayTriangulation(room_coordinates)
 
+        visited : List[Coordinate] = room_coordinates[0]
+
     def drawRoomConnections(self):
         ''' Draw room connections '''
 
         for triangle in self.triangulation:
             for edge in triangle.edges:
                 pygame.draw.line(self.SCREEN, Color.RED, edge.p1.getTuple(), edge.p2.getTuple(), 3)
-
+            pygame.draw.circle(self.SCREEN , Color.WHITE, triangle.pivot_vertex.getTuple(), 5)
+ 
     def createCorridors(self):
         ''' Creates corridors '''
 
@@ -209,9 +212,6 @@ class SimpleRoomPlacement(RogueLikeDefaults):
 
         # Draw room connections
         self.drawRoomConnections()
-
-        # Show it couple of seconds
-        time.sleep(2)
 
         # Create the corridors
         #self.createCorridors()
