@@ -51,22 +51,6 @@ class Triangle():
             Edge(self.verticies[1], self.verticies[2]),
             Edge(self.verticies[2], self.verticies[0])
             ]
-        self.pivot_vertex : Coordinate = self._getPivot()
-
-    def _getPivot(self) -> Coordinate:
-        '''
-        We assign the left most vertex as the pivot vertex
-
-        :return: pivot vertex
-        :rtype: Coordinate
-        '''        
-        left_most : Coordinate = self.verticies[0]
-        for vertex in self.verticies:
-            if vertex.X < left_most.X:
-                left_most = vertex
-
-        return left_most
-
 
     def __eq__(self, __o: object) -> bool:
         ''' 
@@ -96,12 +80,6 @@ class Triangle():
 
     def __str__(self) -> str:
         return f"Triangle: \nP1: {self.verticies[0]}\nP2: {self.verticies[1]}\nP3: {self.verticies[2]}"
-
-class Node():
-    ''' Basic tree node '''
-    def __init__(self, vertex : Coordinate) -> None:
-        self.vertex : Coordinate = vertex
-        self.edges : List[Edge] = []
 
 def determinant(matrix : List[List[int]]):
     '''

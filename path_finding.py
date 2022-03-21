@@ -1,5 +1,8 @@
+# Default Modules
 import math
 from typing import List
+
+# Custom Modules
 from dungeon_tiles import Tiles
 from utilities import Coordinate, Directions, isWithinBounds
 
@@ -7,6 +10,15 @@ class Node():
     ''' A class that represents the nodes in a tile map to be used for A* pathfinding algorithm '''
 
     def __init__(self, location : Coordinate, g_cost : float = None, h_cost : float = None):
+        '''
+        :param location: location of the node
+        :type location: Coordinate
+        :param g_cost: distance from the starting node, defaults to None
+        :type g_cost: float, optional
+        :param h_cost: distance from the end node, defaults to None
+        :type h_cost: float, optional
+        '''     
+
         # Coordinates of the current node
         self.location = location
         
@@ -20,12 +32,13 @@ class Node():
             self.f_cost : float = None
         else:
             self.f_cost : float = g_cost + h_cost
+        
 
         # Costs of the neighbours
         self.neighbours : List[Node] = None
         pass
 
-def distanceTriangulate(location : Coordinate, goal : Coordinate):
+def distanceTriangulate(location : Coordinate, goal : Coordinate) -> int:
     ''' 
     Gets the triangular straight distance between 
     Example:
@@ -39,13 +52,19 @@ def distanceTriangulate(location : Coordinate, goal : Coordinate):
     x = calculation path
     distance = 6 (jumps betwen nodes)
 
-    returns distance in int
-    '''
+    
+    :param location: from location
+    :type location: Coordinate
+    :param goal: to location
+    :type goal: Coordinate
+    :return: returns distance in int
+    :rtype: float
+    '''  
 
     return abs(location.X - goal.X) + abs(location.Y - goal.Y)
 
-def distancePythagorean(location : Coordinate, goal : Coordinate):
-    ''' 
+def distancePythagorean(location : Coordinate, goal : Coordinate) -> float:
+    '''
     Gets the triangular pythagorean distance
     Example:
     o o o S
@@ -58,28 +77,54 @@ def distancePythagorean(location : Coordinate, goal : Coordinate):
     p = calculation path
     distance = 5.66
 
-    returns distance in float
-    '''
+    :param location: from location
+    :type location: Coordinate
+    :param goal: to location
+    :type goal: Coordinate
+    :return: returns distance in float
+    :rtype: float
+    '''    
+
 
     x = abs(location.X - goal.X)
     y = abs(location.Y - goal.Y)
 
     return math.sqrt(math.pow(x,2) + math.pow(y,2))
     
-def shouldFollowTile(location : Coordinate, tiles : List[List[Tiles]], tiles_to_follow : List[Tiles]):
+def shouldFollowTile(location : Coordinate, tiles : List[List[Tiles]], tiles_to_follow : List[Tiles]) -> bool:
     '''
     Checks if the tile at the given location is a part of tiles_to_follow
-    '''
+
+    :param location: location to check
+    :type location: Coordinate
+    :param tiles: tiles to look at
+    :type tiles: List[List[Tiles]]
+    :param tiles_to_follow: tiles to follow
+    :type tiles_to_follow: List[Tiles]
+    :return: true if the tile is within the bounds and a part of tiles_to_follow
+    :rtype: bool
+    '''    
+
 
     if isWithinBounds(location, tiles) == False:
         return False
 
     return tiles[location.Y][location.X] in tiles_to_follow
 
-def isNodeTraversed(location : Coordinate, steps : List[Node]):
-    # Check if the location is already been traversed
+def isNodeTraversed(location : Coordinate, steps : List[Node]) -> bool:
+    '''
+    Check if the location is already been traversed
+
+    :param location: location to search in steps
+    :type location: Coordinate
+    :param steps: steps taken
+    :type steps: List[Node]
+    :return: true if the location is already been traversed
+    :rtype: bool
+    '''    
+    
     for node in steps:
-        if location.X == node.location.X and location.Y == node.location.Y:
+        if location == node.location:
             return True
 
     return False
@@ -87,7 +132,22 @@ def isNodeTraversed(location : Coordinate, steps : List[Node]):
 def aStar(curr : Coordinate, goal : Coordinate, steps : List[Node], tiles : List[List[Tiles]], tiles_to_follow : List[Tiles]) -> List[Coordinate]:
     '''
     Gets the shorthest path between curr and goal by using A* Pathfinding algorithm.
-    '''
+    https://en.wikipedia.org/wiki/A*_search_algorithm
+
+    :param curr: current location
+    :type curr: Coordinate
+    :param goal: target location
+    :type goal: Coordinate
+    :param steps: current traveled locations
+    :type steps: List[Node]
+    :param tiles: tiles(2D matrix) to navigate in
+    :type tiles: List[List[Tiles]]
+    :param tiles_to_follow: Tile types to follow (Tiles not in this list will be avoided)
+    :type tiles_to_follow: List[Tiles]
+    :return: the shorthest path from inital curr to goal
+    :rtype: List[Coordinate]
+    '''    
+    
     # Copy the lists
     steps = steps[:]
 
@@ -110,7 +170,6 @@ def aStar(curr : Coordinate, goal : Coordinate, steps : List[Node], tiles : List
     neighbours : List[Node] = []
 
     for dir in Directions:
-        dir_name = dir.name
         dir : Coordinate = dir.value
 
         loc_to_check = Coordinate(curr.X + dir.X, curr.Y + dir.Y)
@@ -154,7 +213,8 @@ def aStar(curr : Coordinate, goal : Coordinate, steps : List[Node], tiles : List
                 if steps[i].neighbours[j].h_cost < min_node.h_cost:
                     min_node = steps[i].neighbours[j]
                     coming_from = steps[i]
-    
+
+
     # If a min node exists (there should be)
     if min_node != None:
         min_node.coming_from = coming_from
@@ -164,7 +224,7 @@ def aStar(curr : Coordinate, goal : Coordinate, steps : List[Node], tiles : List
          
     
     print("A* Problem!")
-    return None
+    return []
 
 ''' 
 def calculateDistance(curr : Coordinate, goal : Coordinate, steps : List[Coordinate], tiles : List[List[Tiles]], tiles_to_follow : List[Tiles]):

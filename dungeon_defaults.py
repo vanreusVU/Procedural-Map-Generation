@@ -9,23 +9,30 @@ import pygame
 from color_constants import Color
 from dungeon_tiles import Tiles, Tile
 from dungeon_parts import DungeonPart
+from utilities import Coordinate
 
 # Print the todo list
 import todos
-from utilities import Coordinate
+
 
 class RogueLikeDefaults():
-    ''' Main class that handles all the basics of the dungeon creation. 
-    Extend this to use the features'''
+    ''' 
+    Main class that handles all the basics of the dungeon creation. 
+    Extend this to use the features
+    '''
 
     def __init__(self, height = 50, width = 50, grid_size = 40, fps = 1):
         '''
-        @Height: Number of tiles on the Y axis
-        @Width: Number of tiles on the X axis
-        @Grid_Size: Size of the each tile
-        @FPS: Number of times the UI will be re-drawn in a second
-        '''
-
+        :param height: Number of tiles on the Y axis
+        :type height: int, optional
+        :param width:  Number of tiles on the X axis
+        :type width: int, optional
+        :param grid_size: Size of the each tile, defaults to 40
+        :type grid_size: int, optional
+        :param fps: Number of times the UI will be re-drawn in a second, defaults to 1
+        :type fps: int, optional
+        '''        
+        
         self.height = height
         self.width = width
 
@@ -43,6 +50,7 @@ class RogueLikeDefaults():
 
     def start(self) :
         ''' Starts the UI and draws tiles '''
+
         pygame.init()
         self.SCREEN = pygame.display.set_mode((self.window_width, self.window_height))
         self.CLOCK = pygame.time.Clock()
@@ -58,7 +66,7 @@ class RogueLikeDefaults():
             self.resetTiles()
 
             # Add dungeon parts to @self.dungeon_tiles
-            self.__dungeonPartsToTiles()
+            self.dungeonPartsToTiles()
 
             # Call drawing methods
             self.__drawTiles()
@@ -77,7 +85,8 @@ class RogueLikeDefaults():
         return
 
     def __drawTiles(self):
-        '''Draws the tiles every frame. Don't change this'''
+        ''' Draws the tiles every frame. Don't change this '''
+
         for y in range(len(self.dungeon_tiles)):
             for x in range(len(self.dungeon_tiles[y])):
                 # Get tile
@@ -98,8 +107,8 @@ class RogueLikeDefaults():
 
         return
 
-    def __dungeonPartsToTiles(self):
-        '''Projects the dungeon parts onto the @self.dungeon_tiles'''
+    def dungeonPartsToTiles(self):
+        ''' Projects the dungeon parts onto the @self.dungeon_tiles '''
         
         for dungeon_part in self.dungeon_parts:
             tiles = dungeon_part.tiles
@@ -126,23 +135,33 @@ class RogueLikeDefaults():
         return
     
     def addDungenPart(self, dungeon_part : DungeonPart):
-        ''' Add dungeon part to the self.dungeon_parts and then project it to the tiles '''
+        ''' 
+        Add dungeon part to the self.dungeon_parts and then project it to the tiles
+
+        :param dungeon_part: Dungeon part to add
+        :type dungeon_part: DungeonPart
+        '''       
+
         self.dungeon_parts.append(dungeon_part)
 
         # Add dungeon parts to @self.dungeon_tiles
         # We are doing this call here because room creation happens in the begin function thus
         # operations on self.dungeon_tiles would return empty without the call here (before the initial loop)
-        self.__dungeonPartsToTiles()
+        self.dungeonPartsToTiles()
 
     def resetTiles(self):
+        ''' Resets the tiles '''
+
         self.dungeon_tiles = [[Tiles.EMPTY_BLOCK] * self.width for _ in range(self.height)] 
         return
 
     def begin(self):
         '''Will be called once after the init'''
+
         return
 
     def update(self):
         '''Will be called every frame. If you want to do 
         changes dynamically in every frame, extend this function'''
+        
         return

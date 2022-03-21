@@ -21,7 +21,7 @@ class Coordinate():
         :return: coordinate in tuple format
         :rtype: Tuple[int, int]
         '''        
-        return (self.X, self.Y)
+        return (self.X, self.Y)     
 
     def __str__(self) -> str:
         return f"X: {self.X}, Y: {self.Y}"
@@ -63,7 +63,13 @@ class Coordinate():
             return __o.X != self.X or __o.Y != self.Y
         else:
             return super(Coordinate, self).__ne__(__o)
-    
+
+class BasicNode():
+    ''' Basic tree node '''
+    def __init__(self, data) -> None:
+        self.data = data
+        self.connected_nodes : List[BasicNode] = []
+
 class MinMax():
     ''' Simple class that holds two variables under the name of MIN and MAX.'''
 
@@ -98,7 +104,7 @@ def isWithinBounds(location : Coordinate, tiles : List[List[Tiles]]) -> bool:
     :rtype: bool
     '''    
     
-    return (location.Y >= 0 and location.Y < len(tiles)) and (location.X >= 0 and location.X < len(tiles[0]))
+    return (location.Y >= 0 and location.Y < len(tiles)) and (location.X >= 0 and location.X < len(tiles[0]))  
 
 # TODO: Debug function remove later
 def debugTile(tiles : List[List[Tiles]], single_point : Coordinate = Coordinate(-1,-1), single_point_mark : str = "▣", multiple_points : List[Coordinate] = [], multiple_points_mark : str = "▣"):
@@ -109,6 +115,8 @@ def debugTile(tiles : List[List[Tiles]], single_point : Coordinate = Coordinate(
                 print(single_point_mark, end=" ")
             elif True in [True if a.X == x and a.Y == y else False for a in multiple_points]:
                 print(multiple_points_mark, end=" ")
+            elif tiles[y][x] == Tiles.DOOR:
+                print("⚿", end = " ")
             elif tiles[y][x] in Tiles.BLOCKING_TILES:
                 print("■", end=" ")
             else:

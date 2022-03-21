@@ -1,5 +1,3 @@
-from enum import Enum
-
 # Set of color tuples for quick access
 class Color():
     WHITE   = (255,255,255)
