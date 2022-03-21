@@ -32,7 +32,7 @@ class RogueLikeDefaults():
         :param fps: Number of times the UI will be re-drawn in a second, defaults to 1
         :type fps: int, optional
         '''        
-        
+
         self.height = height
         self.width = width
 
@@ -69,7 +69,7 @@ class RogueLikeDefaults():
             self.dungeonPartsToTiles()
 
             # Call drawing methods
-            self.__drawTiles()
+            self.drawTiles()
 
             # Call update function for extra functions..
             self.update()  
@@ -84,9 +84,8 @@ class RogueLikeDefaults():
 
         return
 
-    def __drawTiles(self):
+    def drawTiles(self):
         ''' Draws the tiles every frame. Don't change this '''
-
         for y in range(len(self.dungeon_tiles)):
             for x in range(len(self.dungeon_tiles[y])):
                 # Get tile
@@ -131,7 +130,6 @@ class RogueLikeDefaults():
 
                     # Add the dungeon_part.tile to the self.dungeon_tiles
                     self.dungeon_tiles[world_loc.Y][world_loc.X] = tile
-
         return
     
     def addDungenPart(self, dungeon_part : DungeonPart):

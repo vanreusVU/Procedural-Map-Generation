@@ -273,28 +273,5 @@ def delaunayTriangulation(points : List[Coordinate]) -> List[Triangle]:
         if has_common == True:
             triangulation.remove(triangle)
 
-    # triangulationToTree(triangulation)
     # Return the delaunay triangulation
     return triangulation
-
-def triangulationToTree(triangulation : List[Triangle]):
-    '''
-    Convert triangulation into a tree
-
-    :param triangulation: list of connected triangles
-    :type triangulation: List[Triangle]
-    '''    
-
-    all_edges : List[Edge] = []
-    for triangle in triangulation:
-        for edge in triangle.edges:
-            if edge not in all_edges:
-                all_edges.append(edge)
-
-    nodes : List[Node] = []
-    for edge in all_edges:
-        for node in nodes:
-            # If note doesn't exists
-            if node.vertex != edge.p1 and node.vertex == edge.p2:
-                pass
-    pass

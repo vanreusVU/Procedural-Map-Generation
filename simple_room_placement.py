@@ -18,16 +18,16 @@ from triangulation import Edge, delaunayTriangulation
 # Max number of tries to place a room
 MAX_PLACEMANT_TRIES = 500
 
-NUM_ROOMS = MinMax(15,25)
-ROOM_WIDTH = MinMax(4,10)
-ROOM_HEIGHT = MinMax(4,10)
+NUM_ROOMS = MinMax(25,30)
+ROOM_WIDTH = MinMax(4,15)
+ROOM_HEIGHT = MinMax(4,15)
 ROOM_DOOR = MinMax(1,2)
 
 HEIGHT = 80
 WIDTH = 80
 GRID_SIZE = 15
 FPS = 10
-
+ 
 # Random generation seed
 SEED = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(8))
 print ("CURRENT SEED:", SEED)
@@ -92,6 +92,10 @@ class SimpleRoomPlacement(RogueLikeDefaults):
             if isinstance(part,Room):
                 part.afterInit(self.dungeon_tiles)
 
+        # Update the viewport
+        self.drawTiles()
+        pygame.display.update()
+
     def matchCoordinateWithRoom(self, coord : Coordinate) -> Room:
         '''
         Returns the room with the given pivot location
@@ -151,8 +155,6 @@ class SimpleRoomPlacement(RogueLikeDefaults):
                 vert1_in = edge.p1 in visited
                 vert2_in = edge.p2 in visited
 
-
-
                 # If both sides of the edge isn't visited
                 if vert1_in != vert2_in:
                     # Potential path p1: visited vertex p2: unvisited vertex
@@ -208,9 +210,12 @@ class SimpleRoomPlacement(RogueLikeDefaults):
             p1 = (edge.p1.X * GRID_SIZE, edge.p1.Y * GRID_SIZE)
             p2 = (edge.p2.X * GRID_SIZE, edge.p2.Y * GRID_SIZE)
             
-            pygame.draw.line(self.SCREEN, Color.YELLOW, p1, p2, 3)
+            pygame.draw.line(self.SCREEN, Color.LIME, p1, p2, 3)
 
-            # pygame.draw.circle(self.SCREEN , Color.WHITE, triangle.pivot_vertex.getTuple(), 5)
+            pygame.draw.circle(self.SCREEN , Color.WHITE, p1, 5)
+            pygame.draw.circle(self.SCREEN , Color.WHITE, p2, 5)
+        
+        pygame.display.update()
  
     def createCorridors(self):
         ''' Creates corridors '''
@@ -256,8 +261,9 @@ class SimpleRoomPlacement(RogueLikeDefaults):
             if isinstance(part,Corridor):
                 part.afterInit(self.dungeon_tiles)
 
-        
-
+        # Update the viewport
+        self.drawTiles()
+        pygame.display.update()
 
     def canPlace(self, part_to_place: DungeonPart) -> bool:
         '''
@@ -284,7 +290,10 @@ class SimpleRoomPlacement(RogueLikeDefaults):
     def begin(self):
         # Create the rooms
         self.createRooms() 
-        
+
+        # Wait a little
+        pygame.time.delay(500)
+
         # Make connections
         self.findRoomConnections()
 
@@ -293,6 +302,13 @@ class SimpleRoomPlacement(RogueLikeDefaults):
 
         # Create the corridors
         self.createCorridors()
+
+        # Wait a little
+        pygame.time.delay(500)
+
+        # Erase the lines
+        self.SCREEN.fill(Color.BLACK)
+
         return
 
     def update(self):
