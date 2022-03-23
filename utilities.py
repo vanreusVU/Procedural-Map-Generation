@@ -64,11 +64,13 @@ class Coordinate():
         else:
             return super(Coordinate, self).__ne__(__o)
 
-class BasicNode():
+class SquareArea():
     ''' Basic tree node '''
-    def __init__(self, data) -> None:
-        self.data = data
-        self.connected_nodes : List[BasicNode] = []
+    def __init__(self, location : Coordinate, width : int, height : int) -> None:
+        self.location = location
+        self.width = width 
+        self.height = height
+        self.child_squares : List[SquareArea] = []
 
 class MinMax():
     ''' Simple class that holds two variables under the name of MIN and MAX.'''

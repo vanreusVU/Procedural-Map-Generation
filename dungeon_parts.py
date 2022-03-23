@@ -35,7 +35,7 @@ class DungeonPart():
     def afterInit(self, dungeon_tiles: List[List[Tiles]]):
         '''
         Call this after creating the dungen_parts if you want to make any changes after the main init
-        Example in @Room Class with <simple_room_placement.py>
+        Example in @Room Class with <experiment_one.py>
         '''
         return
 

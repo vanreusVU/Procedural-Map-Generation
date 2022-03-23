@@ -58,6 +58,12 @@ class Experiment2(RogueLikeDefaults):
         self.triangulation = []
         
 
+    def binarySpacePartitioning(self, area):
+        
+        check_width = random.randint(ROOM_WIDTH.MIN, ROOM_WIDTH.MAX)
+        check_height = random.randint(ROOM_HEIGHT.MIN, ROOM_HEIGHT.MAX)
+        
+    
     def createRooms(self):
         ''' Create rooms '''
         # Number of tries
