@@ -102,7 +102,7 @@ class RogueLikeDefaults():
 
                 # Draw the rect
                 rect = pygame.Rect(tile_loc.X, tile_loc.Y, tile_size, tile_size)
-                pygame.draw.rect(self.SCREEN, tile.color, rect, 1, 0)
+                pygame.draw.rect(self.SCREEN, tile.color, rect)
 
         return
 

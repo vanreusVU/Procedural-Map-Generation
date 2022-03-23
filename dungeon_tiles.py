@@ -22,7 +22,7 @@ class Tiles():
     '''
     EMPTY_BLOCK = Tile(5, Color.WHITE) # Means its a out of map empty block
     WALL = Tile(100, Color.RED) # Wall/Room
-    PATH = Tile(80, Color.WHITE) # Path/Corridor
+    PATH = Tile(90, Color.WHITE) # Path/Corridor
     DOOR = Tile(80, Color.BROWN) # Door
     IGNORE = None # Means ignore this tile while drawing and keep whatever is already there
 

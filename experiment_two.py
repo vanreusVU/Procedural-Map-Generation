@@ -32,8 +32,8 @@ FPS = 10
 SEED = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(8))
 print ("CURRENT SEED:", SEED)
 
-class SimpleRoomPlacement(RogueLikeDefaults):
-    '''Simple Room Placement Algorithm for random dungeon generation'''
+class Experiment2(RogueLikeDefaults):
+    '''Binary Space Partitioning, A* pathfinding, Delaunay Triangulation'''
     
     def __init__(self, num_rooms: int = 0, custom_rooms: List[CustomRoom] = []):
         '''
@@ -315,7 +315,7 @@ class SimpleRoomPlacement(RogueLikeDefaults):
         return
         
 def main():
-    srp = SimpleRoomPlacement(NUM_ROOMS)
+    srp = Experiment2(NUM_ROOMS)
     srp.start()
 
 if __name__ == "__main__":
