@@ -11,7 +11,7 @@ from dungeon_defaults import RogueLikeDefaults
 from color_constants import Color
 from dungeon_tiles import Tiles
 from dungeon_parts import CustomRoom, DungeonPart, Room, Corridor, Door
-from utilities import Coordinate, MinMax, debugTile
+from utilities import Coordinate, MinMax, SquareArea, debugTile
 from path_finding import distancePythagorean
 from triangulation import Edge, delaunayTriangulation
 
@@ -58,10 +58,18 @@ class Experiment2(RogueLikeDefaults):
         self.triangulation = []
         
 
-    def binarySpacePartitioning(self, area):
-        
+    def binarySpacePartitioning(self, area : SquareArea):
+
+        # Get random room size
         check_width = random.randint(ROOM_WIDTH.MIN, ROOM_WIDTH.MAX)
         check_height = random.randint(ROOM_HEIGHT.MIN, ROOM_HEIGHT.MAX)
+
+        # Check if the area fits to be a room
+        if area.height <= check_height and area.width <= check_width:
+            return area
+
+        # 0 = Vertical, 1 = Horizontal 
+        split_decision = random.randint(0,1)
         
     
     def createRooms(self):
