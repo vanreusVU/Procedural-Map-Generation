@@ -11,18 +11,19 @@ from dungeon_defaults import RogueLikeDefaults
 from color_constants import Color
 from dungeon_tiles import Tiles
 from dungeon_parts import CustomRoom, DungeonPart, Room, Corridor, Door
-from utilities import Coordinate, MinMax, debugTile
+from utilities import Coordinate, MinMax, debugTile, isWithinBounds
 from path_finding import distancePythagorean
 from triangulation import Edge, delaunayTriangulation
 
 # Max number of tries to place a room
 MAX_PLACEMANT_TRIES = 500
 
+# Rooom Spesifics
 NUM_ROOMS = MinMax(25,30)
 ROOM_WIDTH = MinMax(4,15)
 ROOM_HEIGHT = MinMax(4,15)
-ROOM_DOOR = MinMax(1,2)
 
+# Engine Spesifics
 HEIGHT = 80
 WIDTH = 80
 GRID_SIZE = 15
@@ -277,6 +278,10 @@ class Experiment1(RogueLikeDefaults):
                 world_x = x + part_to_place.pivot_loc.X
                 world_y = y + part_to_place.pivot_loc.Y
                 
+                # If outside of map bounds
+                if isWithinBounds(Coordinate(world_x, world_y),self.dungeon_tiles) == False:
+                    return False
+
                 # If its a none essentail block, skip this iter
                 if dp_tiles[y][x] == Tiles.IGNORE or dp_tiles[y][x] == Tiles.EMPTY_BLOCK:
                     continue
@@ -315,8 +320,8 @@ class Experiment1(RogueLikeDefaults):
         return
         
 def main():
-    srp = Experiment1(NUM_ROOMS)
-    srp.start()
+    ex = Experiment1(NUM_ROOMS)
+    ex.start()
 
 if __name__ == "__main__":
     main()

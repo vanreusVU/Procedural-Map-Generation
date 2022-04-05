@@ -1,6 +1,7 @@
 # Default Modules
 from enum import Enum
 from typing import List, Tuple
+import random
 
 # Custom Modules
 from dungeon_tiles import Tiles
@@ -64,6 +65,39 @@ class Coordinate():
         else:
             return super(Coordinate, self).__ne__(__o)
 
+def getPercentage(number, percentage) -> float:
+        '''returns the x% of the number
+
+        :param number: number to take the percentage of
+        :type number: any numeric type
+        :param percentage: percentage to be taken (0-100)
+        :type percentage: any numeric type
+        :return: floored percentage
+        :rtype: float
+        '''        
+        return (number/100)*percentage
+
+def percentageDifference(number1, number2):
+    '''
+    Percentage difference between number1 and number2
+    - means number2 is that percent less than number1
+
+    :param number1: number1 to compare
+    :type number1: any numeric type
+    :param number2: number to be compared
+    :type number2: any numeric type
+    :return: percentage difference between number1 and number2
+    :rtype: float
+    '''    
+
+    # If one of the numbers is 0 then we need to increase both of the numbers so that the
+    # difference is the same but no 0 exists. !!Division by 0 is not possible!!
+    while number1 == 0 or number2 == 0:
+        number1 += 1
+        number2 += 1
+
+    return ((number2 - number1) / (number1)) * 100
+
 class SquareArea():
     ''' Basic tree node '''
     def __init__(self, location : Coordinate, width : int, height : int) -> None:
@@ -71,6 +105,61 @@ class SquareArea():
         self.width = width 
         self.height = height
         self.child_squares : List[SquareArea] = []
+
+    def splitHorizontally(self, shift_percentage : int = 0):
+        ''' Split the owning squarearea horizontally
+        
+        :param shift_percentage: max amount that the mid-line can move towards one of the sides, defaults to 10
+        :type shift_percentage: int, optional
+        :return: Resulting parts
+        :rtype: [SquareArea, SquareArea]
+        '''    
+
+        # Mid line
+        mid_line = int(self.width / 2)
+
+        # Shift amount
+        max_shift_amount = int(getPercentage(mid_line, shift_percentage))
+
+        # The result will be the mid point where we will split the areas
+        split_loc_x = mid_line + random.randint(-max_shift_amount, max_shift_amount)
+
+        # Part before the splitting line
+        area1 : SquareArea = SquareArea(self.location, split_loc_x, self.height)
+        
+        # Part after the splitting line
+        area2_location : Coordinate = Coordinate((self.location.X + split_loc_x), self.location.Y)
+        area2 : SquareArea = SquareArea(area2_location, self.width - split_loc_x, self.height)
+
+        return [area1, area2]
+
+    def splitVertically(self, shift_percentage : int = 0):
+        ''' Split the owning squarearea vertically
+
+        :param shift_percentage: max amount that the mid-line can move towards either sides, defaults to 0
+        :type shift_percentage: int, optional
+        :return: Resulting parts
+        :rtype: [SquareArea, SquareArea]
+        '''        
+
+        # Mid line
+        mid_line = int(self.height / 2)
+
+        # Shift amount
+        max_shift_amount = int(getPercentage(mid_line, shift_percentage))
+
+        # The result will be the mid point where we will split the areas
+        split_loc_y = mid_line + random.randint(-max_shift_amount, max_shift_amount)
+
+        # Part before the splitting line
+        area1 : SquareArea = SquareArea(self.location, self.width, split_loc_y)
+        
+        # Part after the splitting line
+        area2_location : Coordinate = Coordinate(self.location.X, self.location.Y + split_loc_y)
+        area2 : SquareArea = SquareArea(area2_location, self.width, self.height - split_loc_y)
+
+        return [area1, area2]
+
 
 class MinMax():
     ''' Simple class that holds two variables under the name of MIN and MAX.'''

@@ -106,6 +106,17 @@ class Room(DungeonPart):
         # Assign dungeon tiles
         self.dungeon_tiles = dungeon_tiles
 
+    def getCenter(self) -> Coordinate:
+        ''' Get the world center of the room
+
+        :return: Center of the room 
+        :rtype: Coordinate
+        '''        
+        x = int(self.width/2) + self.pivot_loc.X
+        y = int(self.height/2) + self.pivot_loc.Y
+
+        return Coordinate(x,y)
+
     def __loadDoors(self):
         '''
         Goes through the @self.tiles and crates Door object for each of the doors.
@@ -211,6 +222,29 @@ class Room(DungeonPart):
 
         return world_check and door_check
 
+
+    def getWallTileLocations(self, room) -> List[Coordinate]:
+        '''
+        Returns an array of all the room locations of the given room
+
+        :param room: Room to get the walls locations of
+        :type room: Room
+        :return: List of wall locations
+        :rtype: List[Coordinate]
+        '''        
+        
+        wall_locations : List[Coordinate] = []
+        
+        # Type casting
+        room : Room = room
+
+        for y in range(len(room.tiles)):
+            for x in range(len(room.tiles[y])):
+                if room.tiles[y][x] == Tiles.WALL:
+                    wall_locations.append(Coordinate(x,y))
+
+        return wall_locations
+
     def createRandomDoor(self) -> Door:
         '''
         Creates doors on random locations around the walls based on the @self.num_rooms
@@ -222,12 +256,7 @@ class Room(DungeonPart):
         door : Door = None
 
         # Get all the wall locations and index them by adding them to an array
-        wall_locations : List[Coordinate] = []
-        
-        for y in range(len(self.tiles)):
-            for x in range(len(self.tiles[y])):
-                if self.tiles[y][x] == Tiles.WALL:
-                    wall_locations.append(Coordinate(x,y))
+        wall_locations : List[Coordinate] = self.getWallTileLocations(self)
 
         # Select random door locations
         while (tries < self.MAX_DOOR_PLACEMENT_TRIES):
@@ -315,12 +344,14 @@ class Corridor(DungeonPart):
     Base class to create corridors from the given @start_pos to @end_pos by using the A* pathfinding algorithm.
     '''
 
-    def __init__(self, start : Coordinate, end : Coordinate, dungeon_tiles: List[List[Tiles]], color: Color = None):
+    def __init__(self, start : Coordinate, end : Coordinate, dungeon_tiles: List[List[Tiles]],avoid_walls = True, color: Color = None):
         '''
         :param start: starting position of the corridor
         :type start: Coordinate
         :param end: final position of the corridor
         :type end: Coordinate
+        :param start: should avoid walls or not, default to True
+        :type start: Bool, optional
         :param color: overrides the Tiles default color., defaults to None
         :type color: Color, optional
         '''        
@@ -338,6 +369,9 @@ class Corridor(DungeonPart):
 
         # Adjust tiles size
         self.tiles = [[Tiles.IGNORE] * len(self.dungeon_tiles[0]) for _ in range(len(self.dungeon_tiles))]
+
+        # Avoid walls 
+        self.avoid_walls = avoid_walls
 
         # Create the corridor
         self.createCorridor()
@@ -362,8 +396,13 @@ class Corridor(DungeonPart):
         Gets called during __init__
         Extend this create the corridor by filling its shape in @self.tiles
         '''
+
+        tiles_to_follow = [Tiles.EMPTY_BLOCK, Tiles.DOOR, Tiles.PATH]
+        if self.avoid_walls == False:
+            tiles_to_follow.append(Tiles.WALL)
+
         # Get the corridor path
-        self.corridor_path = aStar(self.start, self.end, [], self.dungeon_tiles, [Tiles.EMPTY_BLOCK, Tiles.DOOR, Tiles.PATH])
+        self.corridor_path = aStar(self.start, self.end, [], self.dungeon_tiles, tiles_to_follow)
 
         if self.corridor_path == None:
             print("Couldn't reach the destination")

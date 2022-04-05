@@ -1,4 +1,5 @@
 # Default Modules
+import copy
 import string
 from typing import List
 import random 
@@ -11,18 +12,21 @@ from dungeon_defaults import RogueLikeDefaults
 from color_constants import Color
 from dungeon_tiles import Tiles
 from dungeon_parts import CustomRoom, DungeonPart, Room, Corridor, Door
-from utilities import Coordinate, MinMax, SquareArea, debugTile
+from utilities import Coordinate, MinMax, SquareArea, debugTile, getPercentage, isWithinBounds, percentageDifference
 from path_finding import distancePythagorean
 from triangulation import Edge, delaunayTriangulation
 
 # Max number of tries to place a room
 MAX_PLACEMANT_TRIES = 500
 
+# Rooom Spesifics
 NUM_ROOMS = MinMax(25,30)
-ROOM_WIDTH = MinMax(4,15)
-ROOM_HEIGHT = MinMax(4,15)
-ROOM_DOOR = MinMax(1,2)
+ROOM_WIDTH = MinMax(8,15)
+ROOM_HEIGHT = MinMax(8,15)
+PARTITION_MARGIN = 10
 
+
+# Engine Spesifics
 HEIGHT = 80
 WIDTH = 80
 GRID_SIZE = 15
@@ -56,38 +60,91 @@ class Experiment2(RogueLikeDefaults):
         self.num_rooms = random.randint(NUM_ROOMS.MIN, NUM_ROOMS.MAX)
         self.custom_rooms = custom_rooms
         self.triangulation = []
+
+        # Possible locatations to place rooms
+        self.possible_room_areas : List[SquareArea] = []
         
 
     def binarySpacePartitioning(self, area : SquareArea):
+        '''
+        Is a method for recursively subdividing a space into two convex sets by using hyperplanes as partitions.
 
-        # Get random room size
-        check_width = random.randint(ROOM_WIDTH.MIN, ROOM_WIDTH.MAX)
-        check_height = random.randint(ROOM_HEIGHT.MIN, ROOM_HEIGHT.MAX)
+        :param area: Area to devide
+        :type area: SquareArea
+        '''        
 
-        # Check if the area fits to be a room
-        if area.height <= check_height and area.width <= check_width:
-            return area
+        rect = pygame.Rect(area.location.X * GRID_SIZE, area.location.Y * GRID_SIZE,area.width * GRID_SIZE,area.height* GRID_SIZE)
+        pygame.draw.rect(self.SCREEN, Color.RED, rect, 1, 0)
+        pygame.display.update()
+        pygame.time.delay(100)
+
+        # Check if the area fits to be a room.
+        # + percentage is for leaving more space for room movement
+        if area.height <= ROOM_HEIGHT.MAX + getPercentage(ROOM_HEIGHT.MAX, 30) and area.width <= ROOM_WIDTH.MAX + getPercentage(ROOM_WIDTH.MAX, 30):
+            # Add this area as a possible room
+            self.possible_room_areas.append(area)
+            return
 
         # 0 = Vertical, 1 = Horizontal 
         split_decision = random.randint(0,1)
         
-    
+        # If partitians are too wide or long
+        if percentageDifference(area.height, area.width) >= 25:
+            area.child_squares = area.splitHorizontally(25)
+        elif percentageDifference(area.width, area.height) >= 25:
+            area.child_squares = area.splitVertically(25)
+        # If not go with the random splitting
+        else:
+            # Also check if spliting the room will end up with too tiny rooms
+            if split_decision == 1:
+                area.child_squares = area.splitHorizontally(25)
+            else:
+                area.child_squares = area.splitVertically(25)
+
+        # Partition the child areas
+        for square in area.child_squares:
+            self.binarySpacePartitioning(square)
+
+        
     def createRooms(self):
         ''' Create rooms '''
         # Number of tries
         tries = 0
         rooms_created = 0
 
+        # Create a area of the dungteon_tiles
+        whole_map : SquareArea = SquareArea(
+            Coordinate(0,0),
+            self.width,
+            self.height
+        )
+
+        # Apply BSP to partition the map into smaller areas
+        self.binarySpacePartitioning(whole_map)
+
+        pygame.time.delay(5000)
         # Place rooms until enough rooms have been placed.
         # Will try to place a room @MAX_PLACEMANT_TRIES times and if it's still not a sucess it will 
         # stop placing rooms. The @tries gets reseted after every successfull placement.
         while rooms_created < self.num_rooms and tries < MAX_PLACEMANT_TRIES:
-            r_width = random.randint(ROOM_WIDTH.MIN, ROOM_WIDTH.MAX)
-            r_height = random.randint(ROOM_HEIGHT.MIN, ROOM_HEIGHT.MAX)
+            # Get a random area
+            room_area : SquareArea = random.choice(self.possible_room_areas)
             
-            r_x = random.randint(0, (self.width - r_width))
-            r_y = random.randint(0, (self.height - r_height))
+            # Skip if the partitian is too small for placement. We need the room_width to me 2 tile bigger than the
+            # room_width.min so that we can leave empty spaces around the room for corridors
+            if room_area.width < ROOM_WIDTH.MIN + 2 or room_area.height < ROOM_HEIGHT.MIN + 2 :
+                continue
 
+            # We want the room to be within the area and leave a empty line around the border
+            # Thats why we deduct 2 from the room's size (one from begining, one from end)
+            r_width = random.randint(ROOM_WIDTH.MIN, min(room_area.width, ROOM_WIDTH.MAX) - 2)
+            r_height = random.randint(ROOM_HEIGHT.MIN, min(room_area.height, ROOM_HEIGHT.MAX) - 2)
+
+            # Get random location within the partition
+            r_x = room_area.location.X + random.randint(1, (room_area.width - r_width) - 1)
+            r_y = room_area.location.Y + random.randint(1, (room_area.height - r_height) - 1)
+
+            # +1 is for avoiding clashing walls
             rand_room = Room(r_x, r_y, r_height, r_width)
             
             # Increase the number of tries
@@ -234,39 +291,19 @@ class Experiment2(RogueLikeDefaults):
     def createCorridors(self):
         ''' Creates corridors '''
         
-
         for path in self.paths:
             rooms : List[Room] = (self.matchCoordinateWithRoom(path.p1), self.matchCoordinateWithRoom(path.p2))
-            doors : List[Door] = []
             
             # Check if all the rooms are found
             if None in rooms:
                 print("ERROR: Can't find one of the rooms")
                 return
 
-            # Create door for the rooms
-            for room in rooms:
-                door = room.createRandomDoor()
-
-                if door == None:
-                    print("WARNING: Can't connect to the created door")
-                    # If room can't be created check if there are any doors that can be used
-                    if len(room.doors) > 0:
-                        door = room.doors[len(room.doors) - 1]
-                    else:
-                        print("ERROR: No door to connect")
-                        return                
-                    
-                # Add door to the list
-                doors.append(door)
-
             # Since the tile checks on the pathfinding algorithm are based on dungeon 
             # tiles we need to write the doors onto the tiles
             self.dungeonPartsToTiles()
 
-            door1_world_loc = doors[0].location + rooms[0].pivot_loc
-            door2_world_loc = doors[1].location + rooms[1].pivot_loc
-            corridor = Corridor(door1_world_loc, door2_world_loc, self.dungeon_tiles)
+            corridor = Corridor(rooms[0].getCenter(), rooms[1].getCenter(), self.dungeon_tiles, False)
 
             self.addDungenPart(corridor)
 
@@ -291,6 +328,10 @@ class Experiment2(RogueLikeDefaults):
                 world_x = x + part_to_place.pivot_loc.X
                 world_y = y + part_to_place.pivot_loc.Y
                 
+                # If outside of map bounds
+                if isWithinBounds(Coordinate(world_x, world_y),self.dungeon_tiles) == False:
+                    return False
+
                 # If its a none essentail block, skip this iter
                 if dp_tiles[y][x] == Tiles.IGNORE or dp_tiles[y][x] == Tiles.EMPTY_BLOCK:
                     continue
@@ -329,8 +370,8 @@ class Experiment2(RogueLikeDefaults):
         return
         
 def main():
-    srp = Experiment2(NUM_ROOMS)
-    srp.start()
+    ex = Experiment2(NUM_ROOMS)
+    ex.start()
 
 if __name__ == "__main__":
     main()

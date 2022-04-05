@@ -1,6 +1,4 @@
-from utilities import Coordinate
+from utilities import percentageDifference
 
 
-a = Coordinate(5,2)
-b = Coordinate(3,1)
-print(b-a)
+print(percentageDifference(10,12.5))
