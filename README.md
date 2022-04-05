@@ -6,7 +6,7 @@ Procedural Map Generation algorithms for rogue-like games. I will try to impleme
 
 **Algorithms in this repo:**
 - [x] Simpe Room Placement
-- [ ] BSP Rooms
+- [x] Binary Space Partitioning(BSP) Room Placement
 - [ ] Voranoi Diagrams
 - [ ] Perlin/Simplex Noise
 - [ ] Cellular Automata
@@ -94,3 +94,9 @@ Placing the corridors was another tricky part that I needed to figure out. The m
 ```python
 abs(location.X - goal.X) + abs(location.Y - goal.Y)
 ```
+
+## Experience 1: Binary Space Partitioning, A* pathfinding (not avoiding), Delaunay Triangulation
+
+<img src="https://i.imgur.com/yBLWnF1.gif" width="480" height="480" />
+
+Binary Space Partitioning (BSP) is a method for space partitioning which recursively subdivides a area into two sets by using smaller areas as partitions. This process of subdividing gives rise to a representation of objects within the space in the form of a tree data structure known as a BSP tree.
