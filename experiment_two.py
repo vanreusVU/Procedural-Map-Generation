@@ -33,7 +33,7 @@ GRID_SIZE = 15
 FPS = 10
  
 # Random generation seed
-SEED = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(8))
+SEED = "82384IRB"#''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(8))
 print ("CURRENT SEED:", SEED)
 
 class Experiment2(RogueLikeDefaults):
@@ -76,7 +76,7 @@ class Experiment2(RogueLikeDefaults):
         rect = pygame.Rect(area.location.X * GRID_SIZE, area.location.Y * GRID_SIZE,area.width * GRID_SIZE,area.height* GRID_SIZE)
         pygame.draw.rect(self.SCREEN, Color.RED, rect, 1, 0)
         pygame.display.update()
-        pygame.time.delay(100)
+        pygame.time.delay(10)
 
         # Check if the area fits to be a room.
         # + percentage is for leaving more space for room movement
@@ -122,7 +122,6 @@ class Experiment2(RogueLikeDefaults):
         # Apply BSP to partition the map into smaller areas
         self.binarySpacePartitioning(whole_map)
 
-        pygame.time.delay(5000)
         # Place rooms until enough rooms have been placed.
         # Will try to place a room @MAX_PLACEMANT_TRIES times and if it's still not a sucess it will 
         # stop placing rooms. The @tries gets reseted after every successfull placement.
@@ -166,6 +165,7 @@ class Experiment2(RogueLikeDefaults):
         # Update the viewport
         self.drawTiles()
         pygame.display.update()
+
 
     def matchCoordinateWithRoom(self, coord : Coordinate) -> Room:
         '''
@@ -286,11 +286,12 @@ class Experiment2(RogueLikeDefaults):
             pygame.draw.circle(self.SCREEN , Color.WHITE, p1, 5)
             pygame.draw.circle(self.SCREEN , Color.WHITE, p2, 5)
         
+        # Update the display so that the drawings can be seen
         pygame.display.update()
  
     def createCorridors(self):
         ''' Creates corridors '''
-        
+
         for path in self.paths:
             rooms : List[Room] = (self.matchCoordinateWithRoom(path.p1), self.matchCoordinateWithRoom(path.p2))
             
@@ -300,10 +301,9 @@ class Experiment2(RogueLikeDefaults):
                 return
 
             # Since the tile checks on the pathfinding algorithm are based on dungeon 
-            # tiles we need to write the doors onto the tiles
             self.dungeonPartsToTiles()
 
-            corridor = Corridor(rooms[0].getCenter(), rooms[1].getCenter(), self.dungeon_tiles, False)
+            corridor = Corridor(rooms[0], rooms[1], self.dungeon_tiles)
 
             self.addDungenPart(corridor)
 

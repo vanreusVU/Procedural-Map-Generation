@@ -91,26 +91,6 @@ def distancePythagorean(location : Coordinate, goal : Coordinate) -> float:
 
     return math.sqrt(math.pow(x,2) + math.pow(y,2))
     
-def shouldFollowTile(location : Coordinate, tiles : List[List[Tiles]], tiles_to_follow : List[Tiles]) -> bool:
-    '''
-    Checks if the tile at the given location is a part of tiles_to_follow
-
-    :param location: location to check
-    :type location: Coordinate
-    :param tiles: tiles to look at
-    :type tiles: List[List[Tiles]]
-    :param tiles_to_follow: tiles to follow
-    :type tiles_to_follow: List[Tiles]
-    :return: true if the tile is within the bounds and a part of tiles_to_follow
-    :rtype: bool
-    '''    
-
-
-    if isWithinBounds(location, tiles) == False:
-        return False
-
-    return tiles[location.Y][location.X] in tiles_to_follow
-
 def isNodeTraversed(location : Coordinate, steps : List[Node]) -> bool:
     '''
     Check if the location is already been traversed
@@ -129,7 +109,7 @@ def isNodeTraversed(location : Coordinate, steps : List[Node]) -> bool:
 
     return False
 
-def aStar(curr : Coordinate, goal : Coordinate, steps : List[Node], tiles : List[List[Tiles]], tiles_to_follow : List[Tiles]) -> List[Coordinate]:
+def aStar(curr : Coordinate, goal : Coordinate, steps : List[Node], tiles : List[List[Tiles]]) -> List[Coordinate]:
     '''
     Gets the shorthest path between curr and goal by using A* Pathfinding algorithm.
     https://en.wikipedia.org/wiki/A*_search_algorithm
@@ -142,8 +122,8 @@ def aStar(curr : Coordinate, goal : Coordinate, steps : List[Node], tiles : List
     :type steps: List[Node]
     :param tiles: tiles(2D matrix) to navigate in
     :type tiles: List[List[Tiles]]
-    :param tiles_to_follow: Tile types to follow (Tiles not in this list will be avoided)
-    :type tiles_to_follow: List[Tiles]
+    :param rooms: Start and end room
+    :type steps: List[Room]
     :return: the shorthest path from inital curr to goal
     :rtype: List[Coordinate]
     '''    
@@ -174,8 +154,8 @@ def aStar(curr : Coordinate, goal : Coordinate, steps : List[Node], tiles : List
 
         loc_to_check = Coordinate(curr.X + dir.X, curr.Y + dir.Y)
 
-        # Skip if the current location is out of bounds or filtered out
-        if isWithinBounds(loc_to_check, tiles) == False or shouldFollowTile(loc_to_check,tiles,tiles_to_follow) == False:
+        # Skip if the current location is out of bounds or is a blocking tile
+        if isWithinBounds(loc_to_check, tiles) == False or (tiles[loc_to_check.Y][loc_to_check.X] in Tiles.BLOCKING_TILES):
             continue 
         
         # Check if the location is already been traversed
@@ -186,6 +166,10 @@ def aStar(curr : Coordinate, goal : Coordinate, steps : List[Node], tiles : List
         g_cost = distanceTriangulate(loc_to_check,steps[0].location) * 10
         # distance from the end node
         h_cost = distanceTriangulate(loc_to_check,goal) * 10
+
+        if tiles[loc_to_check.Y][loc_to_check.X] == Tiles.SOFT_IGNORE_WALL:
+            g_cost += 10
+            h_cost += 10
 
         neighbours.append(Node(loc_to_check, g_cost,h_cost))
 
@@ -220,7 +204,7 @@ def aStar(curr : Coordinate, goal : Coordinate, steps : List[Node], tiles : List
         min_node.coming_from = coming_from
         steps.append(min_node)
 
-        return aStar(min_node.location, goal, steps, tiles, tiles_to_follow)
+        return aStar(min_node.location, goal, steps, tiles)
          
     
     print("A* Problem!")

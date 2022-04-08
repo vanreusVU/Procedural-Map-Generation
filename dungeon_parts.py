@@ -1,11 +1,12 @@
 # Default Modules
 from typing import List
 from random import randrange
+import copy
 
 # Custom Modules
 from color_constants import Color
 from dungeon_tiles import Tile, Tiles
-from utilities import Coordinate, isWithinBounds
+from utilities import Coordinate, checkAlignedBlocks, debugTile, globalToRelative, isWithinBounds
 from path_finding import aStar
 
 class DungeonPart():
@@ -127,59 +128,6 @@ class Room(DungeonPart):
             for x in range(len(self.tiles[y])):
                 if self.tiles[y][x] == Tiles.DOOR:
                     self.doors.append(Door(x,y))
-
-    def checkAlignedBlocks(self, location : Coordinate, tiles : List[List[Tiles]], blocks_to_check : List[Tiles], out_of_bounds_check = False) -> Coordinate:
-        '''
-        Checks the number of vertically and horizontally adjacent @blocks_to_check tiles around the pivot. 
-        
-          V = Vertical check
-          |
-          v
-        O X O
-        X P X <-- H = Horizontal Check
-        O X O
-
-        P = pivot
-        X = tiles to check
-        O = ignore
-
-        :param location: Location to check for aligned blocks
-        :type location: Coordinate
-        :param tiles: 2D matrix of tiles to check
-        :type tiles: List[List[Tiles]]
-        :param blocks_to_check: blocks to check around the location
-        :type blocks_to_check: List[Tiles]
-        :param out_of_bounds_check: counts the areas that are out of the map as a block to check., defaults to False
-        :type out_of_bounds_check: bool, optional
-        :return:  Returns the horizontal(x) and vertical(y) sums in Coordinate format
-        :rtype: Coordinate
-        '''        
-
-        vertical_sum = 0
-        horizontal_sum = 0
-
-        for i in range(-1,2):
-            loc_to_check = Coordinate(location.X + i, location.Y + i)
-
-            # Ignore the center part
-            if loc_to_check.X == location.X and loc_to_check.Y == location.Y:
-                continue
-            
-            # Check on y axis
-            if loc_to_check.Y >= 0 and loc_to_check.Y < len(tiles): 
-                if tiles[loc_to_check.Y][location.X] in blocks_to_check:
-                    vertical_sum += 1
-            elif out_of_bounds_check:
-                vertical_sum += 1
-
-            # Check on x axis
-            if loc_to_check.X >= 0 and loc_to_check.X < len(tiles[0]):
-                if tiles[location.Y][loc_to_check.X] in blocks_to_check:
-                    horizontal_sum += 1
-            elif out_of_bounds_check:
-                horizontal_sum += 1
-        
-        return Coordinate(horizontal_sum, vertical_sum)
     
     def canPlaceDoor(self, x : int, y : int) -> bool:
         '''
@@ -213,11 +161,11 @@ class Room(DungeonPart):
         '''        
 
         # Check if the door is being blocked by another dungeon tile and also for corner pieces
-        world_aligned = self.checkAlignedBlocks(Coordinate(x + self.pivot_loc.X, y + self.pivot_loc.Y), self.dungeon_tiles, Tiles.BLOCKING_TILES, True)
+        world_aligned = checkAlignedBlocks(Coordinate(x + self.pivot_loc.X, y + self.pivot_loc.Y), self.dungeon_tiles, Tiles.BLOCKING_TILES, True)
         world_check = (world_aligned.X == 2 and world_aligned.Y == 0) or (world_aligned.Y == 2 and world_aligned.X == 0)
         
         # Check if the door is next to another door
-        door_aligned = self.checkAlignedBlocks(Coordinate(x, y), self.tiles, [Tiles.DOOR], False)
+        door_aligned = checkAlignedBlocks(Coordinate(x, y), self.tiles, [Tiles.DOOR], False)
         door_check = door_aligned.X + door_aligned.Y == 0
 
         return world_check and door_check
@@ -341,15 +289,15 @@ class CustomRoom(Room):
 
 class Corridor(DungeonPart):
     '''
-    Base class to create corridors from the given @start_pos to @end_pos by using the A* pathfinding algorithm.
+    Base class to create corridors from the given @start_room to @end_room by using the A* pathfinding algorithm.
     '''
 
-    def __init__(self, start : Coordinate, end : Coordinate, dungeon_tiles: List[List[Tiles]],avoid_walls = True, color: Color = None):
+    def __init__(self, start_room : Room, end_room : Room, dungeon_tiles: List[List[Tiles]], color: Color = None):
         '''
-        :param start: starting position of the corridor
-        :type start: Coordinate
-        :param end: final position of the corridor
-        :type end: Coordinate
+        :param start: First room
+        :type start: Room
+        :param end: Connected room
+        :type end: Room
         :param start: should avoid walls or not, default to True
         :type start: Bool, optional
         :param color: overrides the Tiles default color., defaults to None
@@ -359,19 +307,16 @@ class Corridor(DungeonPart):
 
         # Location info
         # Start position
-        self.start = start
+        self.start_room : Room = start_room
 
         # End position
-        self.end = end
+        self.end_room : Room = end_room
 
         # Assign dungeon tiles
         self.dungeon_tiles = dungeon_tiles
 
         # Adjust tiles size
         self.tiles = [[Tiles.IGNORE] * len(self.dungeon_tiles[0]) for _ in range(len(self.dungeon_tiles))]
-
-        # Avoid walls 
-        self.avoid_walls = avoid_walls
 
         # Create the corridor
         self.createCorridor()
@@ -388,21 +333,135 @@ class Corridor(DungeonPart):
         # Update dungeon tiles
         self.dungeon_tiles = dungeon_tiles
 
-        # Place walls around the path
-        self.placeWallsAround()
-    
+        # Place the corridor onto tile
+        self.placeCorridor()
+
+    def isWithinRoom(self, x: int, y: int, room: Room) -> bool:
+        '''is the location within the bounds of the given room
+
+        :param x: x coordinate
+        :type x: int
+        :param y: y coordinate
+        :type y: int
+        :param room: room to check
+        :type room: Room
+        :return: True if the coordinate is within the room
+        :rtype: bool
+        '''     
+
+        within_x = x >= room.pivot_loc.X and x < room.pivot_loc.X + room.width 
+        within_y = y >= room.pivot_loc.Y and y < room.pivot_loc.Y + room.height
+
+        return within_x and within_y
+
+    def isWithinRooms(self, x: int, y: int) -> bool:
+        ''' is the location within the starting or ending room
+
+        :param x: x coordinate
+        :type x: int
+        :param y: y coordinate
+        :type y: int
+        :return: is the location within the starting or ending room
+        :rtype: bool
+        '''        
+        return self.isWithinRoom(x,y,self.start_room) or self.isWithinRoom(x,y,self.end_room)
+
+    def removeRoomPieces(self, room : Room):
+        ''' Remove all room pieces except the corner pieces. Used to make astar alogirthm work properly
+
+        :param room: Room the be removed
+        :type room: Room
+        '''        
+
+        for y in range(len(room.tiles)):
+            for x in range(len(room.tiles[y])):
+                relative_alignment = checkAlignedBlocks(Coordinate(x, y), room.tiles, Tiles.BLOCKING_TILES, False)
+
+                # If the tile is not a corner piece remove it from self.dungeon_tiles
+                if (relative_alignment.X == 2 and relative_alignment.Y == 0) or (relative_alignment.Y == 2 and relative_alignment.X == 0):
+                    self.dungeon_tiles[room.pivot_loc.Y + y][room.pivot_loc.X + x] = Tiles.SOFT_IGNORE_WALL
+
+    def adjustCorridorPath(self) -> List[Coordinate]:
+        ''' 
+        Remove parts of the corridor that overlaps with the inital rooms (start, end). Return the endpoints of the corridor
+
+        :return: end points of overlap with the rooms, could be used to place doors at
+        :rtype: List[Coordinate]
+        '''                   
+
+        path : List[Coordinate] = []
+        
+        # Cut the corridor from start rooms wall to ending rooms wall
+        for coord in self.corridor_path: 
+            start_relative = globalToRelative(self.start_room.pivot_loc, coord)
+            end_relative = globalToRelative(self.end_room.pivot_loc, coord)
+
+            if self.isWithinRoom(coord.X, coord.Y,self.start_room):
+                if start_relative != Coordinate(-1,-1) and self.start_room.tiles[start_relative.Y][start_relative.X] == Tiles.WALL:
+                    path.append(coord)
+            elif self.isWithinRoom(coord.X, coord.Y,self.end_room):
+                if end_relative != Coordinate(-1,-1) and self.end_room.tiles[end_relative.Y][end_relative.X] == Tiles.WALL:
+                    path.append(coord)
+            else:
+                path.append(coord)
+
+        self.corridor_path = path
+        
+        # Edge points are the first and last element of the remaning corridor
+        edge_points = [self.corridor_path[0], self.corridor_path[len(self.corridor_path) - 1]]
+        
+        # Remove first and last element
+        self.corridor_path.pop(0)
+        self.corridor_path.pop()
+
+        return edge_points
+
+    def createDoorAtRoom(self, door_location : Coordinate, room : Room):
+        '''
+        Add door to the given room
+
+        :param door_location: global_door_location
+        :type door_location: Coordinate
+        :param room: room to add the door to
+        :type room: Room
+        '''        
+
+        relative_location : Coordinate = globalToRelative(room.pivot_loc, door_location)
+        if isWithinBounds(relative_location, room.tiles) == False:
+            print("ERROR: createDoorAtRoom, relative location is out of bounds", relative_location)
+            debugTile(self.dungeon_tiles, single_point=door_location, single_point_mark="⛝")
+            return
+
+        room.tiles[relative_location.Y][relative_location.X] = Tiles.DOOR
+        room.doors.append(Door(relative_location.X,relative_location.Y))
+
     def createCorridor(self):
         '''
         Gets called during __init__
         Extend this create the corridor by filling its shape in @self.tiles
         '''
-
-        tiles_to_follow = [Tiles.EMPTY_BLOCK, Tiles.DOOR, Tiles.PATH]
-        if self.avoid_walls == False:
-            tiles_to_follow.append(Tiles.WALL)
+    
+        # Remove start and end rooms from the tiles for the astar so that it will ignore the both of the rooms
+        # However, keep the corner pieces in because we don't want connection from corner pieces
+        self.removeRoomPieces(self.start_room)
+        self.removeRoomPieces(self.end_room)
 
         # Get the corridor path
-        self.corridor_path = aStar(self.start, self.end, [], self.dungeon_tiles, tiles_to_follow)
+        self.corridor_path = aStar(self.start_room.getCenter(), self.end_room.getCenter(), [], self.dungeon_tiles)
+        
+        # self.corridor_path = [path for path in temp_corridor_path if self.isWithinRooms(path.X, path.Y) == False]
+
+        # Clean path and get room locations
+        end_points = self.adjustCorridorPath()
+
+        # debugTile(self.dungeon_tiles, multiple_points=self.corridor_path, multiple_points_mark="⛝")
+    
+        if len(end_points) == 0:
+            print("ERROR: No end points")
+
+        # Create doors at rooms
+        self.createDoorAtRoom(end_points[0], self.start_room)
+        self.createDoorAtRoom(end_points[1], self.end_room)
 
         if self.corridor_path == None:
             print("Couldn't reach the destination")
@@ -412,9 +471,10 @@ class Corridor(DungeonPart):
         for coord in self.corridor_path:
             self.tiles[coord.Y][coord.X] = Tiles.PATH
 
-    def placeWallsAround(self):
+    def placeCorridor(self):
         # Place Tiles to the given coordiantes
         for coord in self.corridor_path:
+
             # Basically place walls around the path
             for y in range(-1,2):
                 for x in range(-1,2):

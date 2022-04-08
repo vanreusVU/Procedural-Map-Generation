@@ -210,8 +210,82 @@ def debugTile(tiles : List[List[Tiles]], single_point : Coordinate = Coordinate(
                 print("⚿", end = " ")
             elif tiles[y][x] in Tiles.BLOCKING_TILES:
                 print("■", end=" ")
+            elif tiles[y][x] == Tiles.PATH:
+                print("⧯", end=" ")
             else:
                 print("◻", end=" ")
             
         print()
     print()
+
+def checkAlignedBlocks( location : Coordinate, tiles : List[List[Tiles]], blocks_to_check : List[Tiles], out_of_bounds_check = False) -> Coordinate:
+    '''
+    Checks the number of vertically and horizontally adjacent @blocks_to_check tiles around the pivot. 
+    
+        V = Vertical check
+        |
+        v
+    O X O
+    X P X <-- H = Horizontal Check
+    O X O
+
+    P = pivot
+    X = tiles to check
+    O = ignore
+
+    :param location: Location to check for aligned blocks
+    :type location: Coordinate
+    :param tiles: 2D matrix of tiles to check
+    :type tiles: List[List[Tiles]]
+    :param blocks_to_check: blocks to check around the location
+    :type blocks_to_check: List[Tiles]
+    :param out_of_bounds_check: counts the areas that are out of the map as a block to check., defaults to False
+    :type out_of_bounds_check: bool, optional
+    :return:  Returns the horizontal(x) and vertical(y) sums in Coordinate format
+    :rtype: Coordinate
+    '''        
+
+    vertical_sum = 0
+    horizontal_sum = 0
+
+    for i in range(-1,2):
+        loc_to_check = Coordinate(location.X + i, location.Y + i)
+
+        # Ignore the center part
+        if loc_to_check.X == location.X and loc_to_check.Y == location.Y:
+            continue
+        
+        # Check on y axis
+        if loc_to_check.Y >= 0 and loc_to_check.Y < len(tiles): 
+            if tiles[loc_to_check.Y][location.X] in blocks_to_check:
+                vertical_sum += 1
+        elif out_of_bounds_check:
+            vertical_sum += 1
+
+        # Check on x axis
+        if loc_to_check.X >= 0 and loc_to_check.X < len(tiles[0]):
+            if tiles[location.Y][loc_to_check.X] in blocks_to_check:
+                horizontal_sum += 1
+        elif out_of_bounds_check:
+            horizontal_sum += 1
+    
+    return Coordinate(horizontal_sum, vertical_sum)
+
+def globalToRelative(point_of_origin: Coordinate, global_point: Coordinate) -> Coordinate:
+    ''' Turns global location into relative
+
+    :param point_of_origin: Pivot point of the relative location
+    :type point_of_origin: Coordinate
+    :param global_point: Global location to be turned into relative
+    :type global_point: Coordinate
+    :return: new relative location
+    :rtype: Coordinate
+    '''    
+
+    relative_coord : Coordinate = global_point - point_of_origin
+    
+    if relative_coord.X < 0 or relative_coord.Y < 0:
+        # print("WARNING: Relative point is behind the origin point")
+        return Coordinate(-1, -1)
+
+    return relative_coord

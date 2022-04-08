@@ -30,7 +30,7 @@ GRID_SIZE = 15
 FPS = 10
  
 # Random generation seed
-SEED = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(8))
+SEED = "UB7L2KWX" # ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(8))
 print ("CURRENT SEED:", SEED)
 
 class Experiment1(RogueLikeDefaults):
@@ -220,40 +220,19 @@ class Experiment1(RogueLikeDefaults):
  
     def createCorridors(self):
         ''' Creates corridors '''
-        
-
+    
         for path in self.paths:
             rooms : List[Room] = (self.matchCoordinateWithRoom(path.p1), self.matchCoordinateWithRoom(path.p2))
-            doors : List[Door] = []
             
             # Check if all the rooms are found
             if None in rooms:
                 print("ERROR: Can't find one of the rooms")
                 return
 
-            # Create door for the rooms
-            for room in rooms:
-                door = room.createRandomDoor()
-
-                if door == None:
-                    print("WARNING: Can't connect to the created door")
-                    # If room can't be created check if there are any doors that can be used
-                    if len(room.doors) > 0:
-                        door = room.doors[len(room.doors) - 1]
-                    else:
-                        print("ERROR: No door to connect")
-                        return                
-                    
-                # Add door to the list
-                doors.append(door)
-
             # Since the tile checks on the pathfinding algorithm are based on dungeon 
-            # tiles we need to write the doors onto the tiles
             self.dungeonPartsToTiles()
 
-            door1_world_loc = doors[0].location + rooms[0].pivot_loc
-            door2_world_loc = doors[1].location + rooms[1].pivot_loc
-            corridor = Corridor(door1_world_loc, door2_world_loc, self.dungeon_tiles)
+            corridor = Corridor(rooms[0], rooms[1], self.dungeon_tiles)
 
             self.addDungenPart(corridor)
 

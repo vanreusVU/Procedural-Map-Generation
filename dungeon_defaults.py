@@ -8,7 +8,7 @@ import pygame
 # Custom Modules
 from color_constants import Color
 from dungeon_tiles import Tiles, Tile
-from dungeon_parts import DungeonPart
+from dungeon_parts import Corridor, DungeonPart, Room
 from utilities import Coordinate
 
 # Print the todo list
@@ -33,19 +33,26 @@ class RogueLikeDefaults():
         :type fps: int, optional
         '''        
 
+        # Height and width of the display by tiles
         self.height = height
         self.width = width
 
+        # tile size is determined by grid_size
         self.grid_size = grid_size
 
+        # Height, tile size to screen size in pixels
         self.window_height = self.height * self.grid_size
         self.window_width  = self.width  * self.grid_size
 
+        # Frame per seconds
         self.FPS = fps
 
+        # Dungeon parts
         self.dungeon_parts : List[DungeonPart] = []
 
+        # Init empty tiles
         self.dungeon_tiles = [[Tiles.EMPTY_BLOCK] * self.width for _ in range(self.height)] 
+
         return
 
     def start(self) :
@@ -56,6 +63,7 @@ class RogueLikeDefaults():
         self.CLOCK = pygame.time.Clock()
         self.SCREEN.fill(Color.BLACK)
 
+        # Call the begin function before the main loop
         self.begin()
         
         while True:

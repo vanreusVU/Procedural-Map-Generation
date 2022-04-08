@@ -26,6 +26,8 @@ class Tiles():
     DOOR = Tile(80, Color.BROWN) # Door
     IGNORE = None # Means ignore this tile while drawing and keep whatever is already there
 
+    SOFT_IGNORE_WALL = Tile(100, Color.RED) # DON'T USE THIS. ITS USED FOR A* PATHFINDING
+
     # Tile groups
     BLOCKING_TILES = [WALL, DOOR]
     SAFE_TILES = [IGNORE, EMPTY_BLOCK, PATH]
