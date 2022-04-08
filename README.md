@@ -6,7 +6,7 @@ Procedural Map Generation algorithms for rogue-like games. I will try to impleme
 
 **Algorithms in this repo:**
 - [x] Simpe Room Placement
-- [ ] BSP Rooms
+- [x] Binary Space Partitioning(BSP) Room Placement
 - [ ] Voranoi Diagrams
 - [ ] Perlin/Simplex Noise
 - [ ] Cellular Automata
@@ -19,7 +19,7 @@ Procedural Map Generation algorithms for rogue-like games. I will try to impleme
 - [ ] Dijkstra Maps
 - [ ] Hot Path  
 
-## Experience 1: Simpe Room Placement, A* pathfinding, Delaunay Triangulation
+## Experiment 1: Simpe Room Placement, A* pathfinding, Delaunay Triangulation
 
 <img src="https://i.imgur.com/UkuRm6P.gif" width="480" height="480" />
 
@@ -93,4 +93,47 @@ Placing the corridors was another tricky part that I needed to figure out. The m
 
 ```python
 abs(location.X - goal.X) + abs(location.Y - goal.Y)
+```
+
+## Experiment 2: Binary Space Partitioning, A* pathfinding (not avoiding), Delaunay Triangulation
+
+<img src="https://i.imgur.com/yBLWnF1.gif" width="480" height="480" />
+
+Binary Space Partitioning (BSP) is a method for space partitioning which recursively subdivides a area into two sets by using smaller areas as partitions. This process of subdividing gives rise to a representation of objects within the space in the form of a tree data structure known as a BSP tree.
+
+```python
+def binarySpacePartitioning(self, area : SquareArea):
+        '''
+        Is a method for recursively subdividing a space into two convex sets by using hyperplanes as partitions.
+
+        :param area: Area to devide
+        :type area: SquareArea
+        '''        
+
+        # Check if the area fits to be a room.
+        # + percentage is for leaving more space for room movement
+        if area.height <= ROOM_HEIGHT.MAX + getPercentage(ROOM_HEIGHT.MAX, 30) and area.width <= ROOM_WIDTH.MAX + getPercentage(ROOM_WIDTH.MAX, 30):
+            # Add this area as a possible room
+            self.possible_room_areas.append(area)
+            return
+
+        # 0 = Vertical, 1 = Horizontal 
+        split_decision = random.randint(0,1)
+        
+        # If partitians are too wide or long
+        if percentageDifference(area.height, area.width) >= 25:
+            area.child_squares = area.splitHorizontally(25)
+        elif percentageDifference(area.width, area.height) >= 25:
+            area.child_squares = area.splitVertically(25)
+        # If not go with the random splitting
+        else:
+            # Also check if spliting the room will end up with too tiny rooms
+            if split_decision == 1:
+                area.child_squares = area.splitHorizontally(25)
+            else:
+                area.child_squares = area.splitVertically(25)
+
+        # Partition the child areas
+        for square in area.child_squares:
+            self.binarySpacePartitioning(square)
 ```
