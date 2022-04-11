@@ -9,14 +9,16 @@ from utilities import Coordinate, Directions, isWithinBounds
 class Node():
     ''' A class that represents the nodes in a tile map to be used for A* pathfinding algorithm '''
 
-    def __init__(self, location : Coordinate, g_cost : float = None, h_cost : float = None):
+    def __init__(self, location : Coordinate, g_cost : float = 0, h_cost : float = 0, e_cost : float = 0):
         '''
         :param location: location of the node
         :type location: Coordinate
-        :param g_cost: distance from the starting node, defaults to None
+        :param g_cost: distance from the starting node, defaults to 0
         :type g_cost: float, optional
-        :param h_cost: distance from the end node, defaults to None
+        :param h_cost: distance from the end node, defaults to 0
         :type h_cost: float, optional
+        :param e_cost: extra costs, defaults to 0
+        :type e_cost: float, optional
         '''     
 
         # Coordinates of the current node
@@ -26,14 +28,15 @@ class Node():
         self.g_cost : float = g_cost 
         self.h_cost : float = h_cost
 
-        self.coming_from : Node = None
-        
-        if g_cost == None or h_cost == None:
-            self.f_cost : float = None
-        else:
-            self.f_cost : float = g_cost + h_cost
-        
+        # For extra costs to add to the node
+        self.e_cost : float = e_cost
 
+        # Node that leads to this node
+        self.coming_from : Node = None
+
+        # Final cost    
+        self.f_cost : float = self.g_cost + self.h_cost + self.e_cost
+    
         # Costs of the neighbours
         self.neighbours : List[Node] = None
         pass
@@ -167,11 +170,18 @@ def aStar(curr : Coordinate, goal : Coordinate, steps : List[Node], tiles : List
         # distance from the end node
         h_cost = distanceTriangulate(loc_to_check,goal) * 10
 
-        if tiles[loc_to_check.Y][loc_to_check.X] == Tiles.SOFT_IGNORE_WALL:
-            g_cost += 10
-            h_cost += 10
+        # EXTRA GUIDANCE
+        e_cost = 0
 
-        neighbours.append(Node(loc_to_check, g_cost,h_cost))
+        # Follow the soft_ignore_walls
+        if tiles[loc_to_check.Y][loc_to_check.X] == Tiles.SOFT_IGNORE_WALL:
+            e_cost -= (g_cost + h_cost) / 2
+        
+        # Follow the already existing paths (other corridors)
+        if tiles[loc_to_check.Y][loc_to_check.X] == Tiles.PATH: 
+            e_cost -= (g_cost + h_cost) / 2
+
+        neighbours.append(Node(loc_to_check, g_cost,h_cost,e_cost))
 
     steps[len(steps) - 1].neighbours = neighbours[:]
 

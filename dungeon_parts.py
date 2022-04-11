@@ -107,6 +107,23 @@ class Room(DungeonPart):
         # Assign dungeon tiles
         self.dungeon_tiles = dungeon_tiles
 
+    def addDoor(self, location : Coordinate):
+        ''' Adds a door to the given relative loation at the room
+
+        :param location: relative location to place a door at
+        :type location: Coordinate
+        '''        
+
+        # Check if the same door exists
+        for door in self.doors:
+            if door.location == location:
+                # Door already exists
+                return
+
+        # Add the door
+        self.doors.append(Door(location.X, location.Y))
+        self.tiles[location.Y][location.X] = Tiles.DOOR
+
     def getCenter(self) -> Coordinate:
         ''' Get the world center of the room
 
@@ -389,30 +406,29 @@ class Corridor(DungeonPart):
         :rtype: List[Coordinate]
         '''                   
 
+        # Adjusted path
         path : List[Coordinate] = []
         
+        # Edge points are the only overlaps that the corridor has with the rooms -> the doors
+        edge_points : List[Coordinate] = [None, None]
+
         # Cut the corridor from start rooms wall to ending rooms wall
         for coord in self.corridor_path: 
-            start_relative = globalToRelative(self.start_room.pivot_loc, coord)
-            end_relative = globalToRelative(self.end_room.pivot_loc, coord)
-
-            if self.isWithinRoom(coord.X, coord.Y,self.start_room):
-                if start_relative != Coordinate(-1,-1) and self.start_room.tiles[start_relative.Y][start_relative.X] == Tiles.WALL:
-                    path.append(coord)
-            elif self.isWithinRoom(coord.X, coord.Y,self.end_room):
-                if end_relative != Coordinate(-1,-1) and self.end_room.tiles[end_relative.Y][end_relative.X] == Tiles.WALL:
-                    path.append(coord)
-            else:
+            if not self.isWithinRooms(coord.X, coord.Y):
                 path.append(coord)
 
+        for coord in self.corridor_path:
+            if self.isWithinRoom(coord.X, coord.Y, self.start_room):
+                edge_points[0] = coord
+            if self.isWithinRoom(coord.X, coord.Y, self.end_room):
+                edge_points[1] = coord
+                # We want to first tile within the room for the door.
+                # Thats why we break out after finding it
+                break
+
+        # debugTile(self.dungeon_tiles, multiple_points=edge_points, multiple_points_mark="⛝")
+
         self.corridor_path = path
-        
-        # Edge points are the first and last element of the remaning corridor
-        edge_points = [self.corridor_path[0], self.corridor_path[len(self.corridor_path) - 1]]
-        
-        # Remove first and last element
-        self.corridor_path.pop(0)
-        self.corridor_path.pop()
 
         return edge_points
 
@@ -432,8 +448,8 @@ class Corridor(DungeonPart):
             debugTile(self.dungeon_tiles, single_point=door_location, single_point_mark="⛝")
             return
 
-        room.tiles[relative_location.Y][relative_location.X] = Tiles.DOOR
-        room.doors.append(Door(relative_location.X,relative_location.Y))
+        # Add door
+        room.addDoor(relative_location)
 
     def createCorridor(self):
         '''

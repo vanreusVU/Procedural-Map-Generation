@@ -33,7 +33,7 @@ GRID_SIZE = 15
 FPS = 10
  
 # Random generation seed
-SEED = "82384IRB"#''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(8))
+SEED = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(8))
 print ("CURRENT SEED:", SEED)
 
 class Experiment2(RogueLikeDefaults):
