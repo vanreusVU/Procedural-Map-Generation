@@ -9,7 +9,7 @@ Procedural Map Generation algorithms for rogue-like games. I will try to impleme
 - [x] Binary Space Partitioning(BSP) Room Placement
 - [ ] Voranoi Diagrams
 - [ ] Perlin/Simplex Noise
-- [ ] Cellular Automata
+- [x] Cellular Automata
 - [x] Delaunay Triangulation
 - [x] A* pathfinding
 - [ ] Drunkard's Walk
@@ -137,3 +137,5 @@ def binarySpacePartitioning(self, area : SquareArea):
         for square in area.child_squares:
             self.binarySpacePartitioning(square)
 ```
+
+## Experiment 3: Cellular Automata and Flood Fill
