@@ -198,7 +198,7 @@ def isWithinBounds(location : Coordinate, tiles : List[List[Tiles]]) -> bool:
     return (location.Y >= 0 and location.Y < len(tiles)) and (location.X >= 0 and location.X < len(tiles[0]))  
 
 # TODO: Debug function remove later
-def debugTile(tiles : List[List[Tiles]], single_point : Coordinate = Coordinate(-1,-1), single_point_mark : str = "▣", multiple_points : List[Coordinate] = [], multiple_points_mark : str = "▣"):
+def debugTile(tiles : List[List[Tiles]], single_point : Coordinate = Coordinate(-1,-1), single_point_mark : str = "⛝", multiple_points : List[Coordinate] = [], multiple_points_mark : str = "⛝"):
 
     for y in range(len(tiles)):
         for x in range(len(tiles[y])):

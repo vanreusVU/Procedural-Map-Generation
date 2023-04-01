@@ -53,6 +53,9 @@ class RogueLikeDefaults():
         # Init empty tiles
         self.dungeon_tiles = [[Tiles.EMPTY_BLOCK] * self.width for _ in range(self.height)] 
 
+        # Total steps
+        self.steps = 0
+
         return
 
     def start(self) :
@@ -69,9 +72,12 @@ class RogueLikeDefaults():
         while True:
             self.CLOCK.tick(self.FPS)
             
+            self.SCREEN.fill(Color.BLACK)
+            
             # Reset tiles 
             # (We reset everytime so that if there are any changes we can draw from the begining)
-            self.resetTiles()
+            if len(self.dungeon_parts) > 0:
+                self.resetTiles()
 
             # Add dungeon parts to @self.dungeon_tiles
             self.dungeonPartsToTiles()
@@ -82,6 +88,9 @@ class RogueLikeDefaults():
             # Call update function for extra functions..
             self.update()  
 
+            # Inc steps
+            self.steps += 1
+            
             # Exit code
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
